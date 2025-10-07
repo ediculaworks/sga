@@ -36,13 +36,18 @@ sga/
 │   │   └── shared/           # Componentes compartilhados
 │   ├── lib/                   # Bibliotecas e utilidades
 │   │   ├── supabase/         # Configuração Supabase
+│   │   ├── services/         # Serviços CRUD do banco
+│   │   ├── utils/            # Utilitários (validação, formatação, queries)
 │   │   └── utils.ts          # Funções utilitárias
-│   ├── types/                 # Definições TypeScript
+│   ├── types/                 # Definições TypeScript do banco de dados
 │   ├── hooks/                 # React Hooks customizados
 │   └── stores/                # Stores Zustand
+├── supabase/                  # Arquivos do Supabase
+│   └── schema.sql            # Schema do banco de dados
 ├── public/                    # Arquivos estáticos
 ├── .env.local                 # Variáveis de ambiente (local)
 ├── .env.example              # Template de variáveis de ambiente
+├── SETUP_DATABASE.md         # Guia de configuração do banco
 ├── components.json           # Configuração shadcn/ui
 ├── tailwind.config.ts        # Configuração Tailwind
 ├── tsconfig.json             # Configuração TypeScript
@@ -108,14 +113,17 @@ yarn dev
 pnpm dev
 ```
 
-5. **Configure o Supabase**
+5. **Configure o Banco de Dados**
 
-Siga o guia completo em [SETUP_SUPABASE.md](./SETUP_SUPABASE.md) ou:
+⚠️ **Importante**: O banco de dados deve ser configurado antes de usar o sistema.
 
-- Acesse [http://localhost:3000/setup](http://localhost:3000/setup)
-- Cole suas credenciais do Supabase
-- Teste a conexão
-- Execute o script SQL em `supabase/schema.sql`
+Siga o guia completo de configuração: **[SETUP_DATABASE.md](./SETUP_DATABASE.md)**
+
+Resumo dos passos:
+- Crie um projeto no Supabase
+- Execute o schema SQL (`supabase/schema.sql`) no SQL Editor do Supabase
+- Configure as variáveis de ambiente no `.env.local`
+- Teste a conexão em [http://localhost:3000/api/test-supabase](http://localhost:3000/api/test-supabase)
 
 6. **Abra o navegador**
 
@@ -157,13 +165,35 @@ Todos os componentes estão localizados em `src/components/ui/` e podem ser pers
 
 ## 🗄️ Banco de Dados
 
-O projeto utiliza **PostgreSQL** através do **Supabase**. O schema do banco de dados será configurado nas próximas etapas do desenvolvimento.
+O projeto utiliza **PostgreSQL** através do **Supabase** com um schema completo incluindo:
 
-Para configurar o banco de dados:
+### Tabelas Principais
+- **Usuários**: Gerenciamento de profissionais (médicos, enfermeiros, motoristas, chefes)
+- **Ambulâncias**: Cadastro e controle de ambulâncias
+- **Ocorrências**: Registro de atendimentos e emergências
+- **Pacientes**: Cadastro de pacientes atendidos
+- **Escala**: Controle de disponibilidade de profissionais
+- **Equipamentos**: Catálogo e estoque de equipamentos médicos
+- **Checklists**: Verificações técnicas e de equipamentos
+- **Rastreamento**: Localização GPS das ambulâncias
+- **Notificações**: Sistema de alertas
+- **Logs**: Auditoria do sistema
 
-1. Acesse seu projeto no Supabase
-2. Vá em "SQL Editor"
-3. Execute os scripts de criação de tabelas (serão fornecidos em versões futuras)
+### Views e Relatórios
+- Resumo de ocorrências por período
+- Estatísticas de ambulâncias
+- Profissionais disponíveis
+- Estoque baixo de equipamentos
+- Pagamentos pendentes
+
+### Triggers Automáticos
+- Atualização automática de timestamps
+- Gestão de estoque após consumo
+- Mudança de status de ambulâncias
+- Cálculo de duração de ocorrências
+- Verificação de revisão por kilometragem
+
+📚 **Documentação completa**: [SETUP_DATABASE.md](./SETUP_DATABASE.md)
 
 ## 🔐 Autenticação
 

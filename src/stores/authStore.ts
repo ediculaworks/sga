@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '@/types';
+import { Usuario } from '@/types';
 
 /**
  * Store Zustand para gerenciamento de autenticação
@@ -9,9 +9,9 @@ import { User } from '@/types';
  */
 
 interface AuthState {
-  user: User | null;
+  user: Usuario | null;
   isLoading: boolean;
-  setUser: (user: User | null) => void;
+  setUser: (user: Usuario | null) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
 }

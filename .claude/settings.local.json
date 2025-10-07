@@ -9,7 +9,13 @@
       "Bash(npm uninstall:*)",
       "Bash(tree:*)",
       "Bash(npm run dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c taskkill:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
