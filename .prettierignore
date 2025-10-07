@@ -1,0 +1,19 @@
+# Arquivos e diretórios a serem ignorados pelo Prettier
+
+node_modules
+.next
+out
+build
+dist
+coverage
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Logs
+*.log
+
+# Env files
+.env*
