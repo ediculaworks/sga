@@ -94,8 +94,8 @@ export default function AgendaMedicoPage() {
   const events: CalendarEvent[] =
     ocorrencias?.map((participacao: any) => {
       const occ = participacao.ocorrencias;
-      // CORREÇÃO: Usar parseISO para evitar problemas de timezone
-      const dataOcorrencia = new Date(occ.data_ocorrencia);
+      // CORREÇÃO: Adicionar 'T00:00:00' para forçar timezone local
+      const dataOcorrencia = new Date(occ.data_ocorrencia + 'T00:00:00');
 
       // Horário de início (horario_saida)
       const [horaInicio, minInicio] = occ.horario_saida.split(':');

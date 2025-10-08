@@ -5,6 +5,37 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.13.2] - 2025-10-08
+
+### 🐛 Corrigido
+
+#### Correção de Datas na Agenda e Status de Ocorrências
+
+**Problema 1: Datas Incorretas na Agenda**
+- Ocorrências do dia 9 apareciam no dia 8 no calendário
+- **Causa:** `new Date('2025-10-09')` sem timezone era interpretado como UTC 00:00, resultando no dia anterior no timezone local
+- **Solução:** Adicionar `'T00:00:00'` ao parsear a data para forçar timezone local
+
+**Problema 2: Status Incorreto em Cards de Ocorrências**
+- Ocorrências confirmadas mostravam badge "Em Aberto" (azul) ao invés de "Confirmada" (verde)
+- **Causa:** Hook `useOcorrenciasDisponiveis` retornava `status_ocorrencia` mas o `OcorrenciaCard` esperava a prop `status`
+- **Solução:** Mapear corretamente `status_ocorrencia` para `status` no retorno do hook
+
+**Arquivos Modificados:**
+- `src/app/(dashboard)/medico/agenda/page.tsx` (linha 98)
+  - Correção: `new Date(occ.data_ocorrencia + 'T00:00:00')`
+- `src/app/(dashboard)/enfermeiro/agenda/page.tsx` (linha 98)
+  - Correção: `new Date(occ.data_ocorrencia + 'T00:00:00')`
+- `src/hooks/useOcorrenciasDisponiveis.ts` (linhas 134 e 165)
+  - Correção: Cast de `status_ocorrencia` para tipo correto do `OcorrenciaCard`
+
+**Testes:**
+- ✅ ESLint sem erros
+- ✅ Calendário mostra datas corretas
+- ✅ Badges de status exibem cores corretas
+
+---
+
 ## [0.13.1] - 2025-10-08
 
 ### 🐛 Corrigido

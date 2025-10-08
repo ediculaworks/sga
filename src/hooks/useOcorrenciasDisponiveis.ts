@@ -120,6 +120,7 @@ export function useOcorrenciasDisponiveis(
 
         if (jaConfirmado) {
           // Profissional já confirmado - adicionar à lista de confirmadas
+          // CORREÇÃO: Mapear status_ocorrencia para status (esperado pelo OcorrenciaCard)
           confirmadas.push({
             id: ocorrencia.id,
             numero_ocorrencia: ocorrencia.numero_ocorrencia,
@@ -130,7 +131,7 @@ export function useOcorrenciasDisponiveis(
             horario_no_local: ocorrencia.horario_chegada_local,
             horario_termino: ocorrencia.horario_termino,
             local_ocorrencia: ocorrencia.local_ocorrencia,
-            status: ocorrencia.status_ocorrencia,
+            status: ocorrencia.status_ocorrencia as 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA',
             profissional_confirmado: true,
           });
         } else if (ocorrencia.status_ocorrencia === 'EM_ABERTO') {
@@ -150,6 +151,7 @@ export function useOcorrenciasDisponiveis(
 
           if (vagasDisponiveis > 0) {
             // Há vagas disponíveis para este perfil
+            // CORREÇÃO: Mapear status_ocorrencia para status (esperado pelo OcorrenciaCard)
             disponiveis.push({
               id: ocorrencia.id,
               numero_ocorrencia: ocorrencia.numero_ocorrencia,
@@ -160,7 +162,7 @@ export function useOcorrenciasDisponiveis(
               horario_no_local: ocorrencia.horario_chegada_local,
               horario_termino: ocorrencia.horario_termino,
               local_ocorrencia: ocorrencia.local_ocorrencia,
-              status: ocorrencia.status_ocorrencia,
+              status: ocorrencia.status_ocorrencia as 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA',
               vagas_disponiveis: vagasDisponiveis,
               total_vagas: totalVagasParaPerfil,
               profissional_confirmado: false,
