@@ -2,16 +2,42 @@
 
 import { useState } from 'react';
 import { PacientesTable } from '@/components/pacientes/PacientesTable';
+import { PacienteHistoricoModal } from '@/components/pacientes/PacienteHistoricoModal';
+import { ProntuarioModal } from '@/components/pacientes/ProntuarioModal';
 
 export default function PacientesMedicoPage() {
   const [selectedPacienteId, setSelectedPacienteId] = useState<number | null>(
     null
   );
+  const [selectedAtendimentoId, setSelectedAtendimentoId] = useState<
+    number | null
+  >(null);
+  const [isHistoricoOpen, setIsHistoricoOpen] = useState(false);
+  const [isProntuarioOpen, setIsProntuarioOpen] = useState(false);
 
   const handleVerHistorico = (pacienteId: number) => {
     setSelectedPacienteId(pacienteId);
-    // TODO: Abrir modal de histórico (FASE 5.2)
-    console.log('Ver histórico do paciente:', pacienteId);
+    setIsHistoricoOpen(true);
+  };
+
+  const handleVerProntuario = (atendimentoId: number) => {
+    setSelectedAtendimentoId(atendimentoId);
+    setIsHistoricoOpen(false);
+    setIsProntuarioOpen(true);
+  };
+
+  const handleCloseHistorico = () => {
+    setIsHistoricoOpen(false);
+    setSelectedPacienteId(null);
+  };
+
+  const handleCloseProntuario = () => {
+    setIsProntuarioOpen(false);
+    setSelectedAtendimentoId(null);
+    // Reabrir modal de histórico se ainda tiver paciente selecionado
+    if (selectedPacienteId) {
+      setIsHistoricoOpen(true);
+    }
   };
 
   return (
@@ -26,6 +52,19 @@ export default function PacientesMedicoPage() {
       </div>
 
       <PacientesTable onVerHistorico={handleVerHistorico} />
+
+      <PacienteHistoricoModal
+        pacienteId={selectedPacienteId}
+        isOpen={isHistoricoOpen}
+        onClose={handleCloseHistorico}
+        onVerProntuario={handleVerProntuario}
+      />
+
+      <ProntuarioModal
+        atendimentoId={selectedAtendimentoId}
+        isOpen={isProntuarioOpen}
+        onClose={handleCloseProntuario}
+      />
     </div>
   );
 }

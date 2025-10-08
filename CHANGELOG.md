@@ -5,6 +5,145 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.11.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 6.1 - Dashboard do Enfermeiro
+
+**Dashboard Completo do Enfermeiro** (`src/app/(dashboard)/enfermeiro/page.tsx`)
+- Dashboard funcional com todas as features do médico
+- **Reutilização de Componentes:**
+  - StatsCard para estatísticas
+  - OcorrenciaCard para exibição de ocorrências
+  - OcorrenciaDetalhesModal para detalhes
+- **3 Cards de Estatísticas:**
+  - Ocorrências Atendidas (com trend)
+  - Pagamentos Pendentes (clicável)
+  - Remoções realizadas
+  - Filtro por período (semana/mês/ano)
+- **Seção de Ocorrências Confirmadas:**
+  - Grid de cards com ocorrências do enfermeiro
+  - Visual diferenciado (variant="confirmed")
+  - Click para ver detalhes
+- **Seção de Ocorrências Disponíveis:**
+  - Filtro automático por perfil ENFERMEIRO
+  - Verifica disponibilidade e escala
+  - Loading, error e empty states
+  - Grid responsivo de cards
+- **Funcionalidade de Confirmação:**
+  - Botão para confirmar participação
+  - Toast de feedback
+  - Atualização automática da lista
+  - Estados de loading
+- **Modal de Detalhes:**
+  - Integrado com perfil ENFERMEIRO
+  - Exibe informações completas
+  - Permite confirmar participação
+- **Queries Otimizadas:**
+  - useMedicoStats adaptado para enfermeiro
+  - useOcorrenciasDisponiveis com perfil ENFERMEIRO
+  - Cache de 5 minutos
+- **Proteção de Rota:**
+  - ProtectedRoute para ENFERMEIRO
+  - Redirecionamento automático
+- **UI/UX:**
+  - Responsivo (mobile/desktop)
+  - Estados visuais claros
+  - Feedback imediato ao usuário
+
+## [0.10.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 5.2 - Modal de Histórico do Paciente
+
+**Componente PacienteHistoricoModal** (`src/components/pacientes/PacienteHistoricoModal.tsx`)
+- Modal completo de histórico do paciente
+- **Seção de Informações Pessoais:**
+  - Nome completo, CPF, data de nascimento
+  - Idade (calculada ou cadastrada)
+  - Sexo, telefone
+  - Endereço completo
+  - Contato de emergência e telefone
+  - Observações gerais
+- **Lista de Atendimentos:**
+  - Ordenação cronológica (mais recente primeiro)
+  - Card para cada atendimento com:
+    * Data e hora do atendimento
+    * Número da ocorrência
+    * Local da ocorrência
+    * Médico responsável
+    * Queixa principal
+    * Badge "Remoção" se aplicável
+    * Hospital destino (se remoção)
+    * Botão "Ver Prontuário"
+  - Ícones para melhor visualização
+  - Hover effects nos cards
+- **Estados:**
+  - Loading state
+  - Empty state (sem atendimentos)
+- **Query otimizada:**
+  - Join com atendimentos, ocorrências e usuários
+  - Cache de 5 minutos
+
+**Componente ProntuarioModal** (`src/components/pacientes/ProntuarioModal.tsx`)
+- Modal de visualização completa do prontuário
+- **Informações do Atendimento:**
+  - Nome do paciente
+  - Data e hora do atendimento
+  - Número da ocorrência
+  - Médico responsável
+  - Local da ocorrência
+- **Dados Clínicos Completos:**
+  - Queixa principal
+  - Quadro clínico
+  - Procedimentos realizados
+  - Diagnóstico
+  - Hospital destino (se remoção)
+  - Observações gerais
+  - Formatação com whitespace-pre-wrap para quebras de linha
+- **Notas de Enfermagem:**
+  - Lista de todas as notas do atendimento
+  - Nome do enfermeiro
+  - Data e hora da nota
+  - Conteúdo da nota
+  - Visual diferenciado com borda lateral
+- **Arquivos Anexados:**
+  - Grid de arquivos (imagens e documentos)
+  - Ícones diferenciados por tipo
+  - Nome do arquivo e tamanho
+  - Click para download via Supabase Storage
+  - Preview de imagens
+- **Queries otimizadas:**
+  - Busca de atendimento com joins
+  - Busca de arquivos anexados
+  - Busca de notas de enfermeiro
+  - Cache de 5 minutos
+
+**Integração nas Páginas:**
+- Médico (`src/app/(dashboard)/medico/pacientes/page.tsx`)
+- Chefe dos Médicos (`src/app/(dashboard)/chefe-medicos/pacientes/page.tsx`)
+- Fluxo completo: Tabela → Histórico → Prontuário
+- Navegação entre modais (volta do prontuário para histórico)
+- Estados gerenciados corretamente
+
+### 🎨 Melhorado
+
+**Sistema de Cores e Tipografia**
+- Variáveis CSS completas do shadcn/ui configuradas
+- Fonte moderna: -apple-system, Segoe UI, Roboto
+- Dropdowns com fundo branco sólido (não transparente)
+- Texto em cor escura legível (#111827)
+- Bordas bem definidas em todos os componentes
+- Sombras aumentadas para melhor destaque
+
+**Componentes UI Corrigidos:**
+- Select component com fundo opaco
+- DropdownMenu com fundo opaco
+- Tailwind config atualizado com todas as cores
+- Plugin tailwindcss-animate instalado
+
 ## [0.9.0] - 2025-10-08
 
 ### ✅ Adicionado
