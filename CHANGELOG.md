@@ -5,6 +5,120 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.6.1] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Modal de Detalhes da Ocorrência - Status EM_ABERTO (FASE 3.3)
+
+**Componente OcorrenciaDetalhesModal** (`src/components/ocorrencias/OcorrenciaDetalhesModal.tsx`)
+- Modal completo de detalhes de ocorrências
+- Props: ocorrenciaId, isOpen, onClose, perfil, onConfirmarParticipacao, isConfirmando
+- Query automática de dados com React Query
+- **Exibição de informações:**
+  - Número da ocorrência (destaque em card azul)
+  - Tipo de trabalho e tipo de ambulância (badges coloridos)
+  - Descrição da ocorrência
+  - Local completo com endereço
+  - Data formatada em português (date-fns)
+  - Horários: saída, chegada no local, término (se aplicável)
+  - Lista de participantes/vagas:
+    * Nome do profissional (se confirmado)
+    * Função (Médico/Enfermeiro)
+    * Status (Disponível/Confirmado) com badges
+  - Informações de pagamento:
+    * Valor por função
+    * Data de pagamento prevista
+    * Card verde destacado
+- **Funcionalidades:**
+  - Botão "Confirmar Participação" (aparece apenas se há vaga disponível)
+  - Loading state durante confirmação
+  - Estados de loading e erro na query
+  - Design responsivo com scroll vertical
+  - Integração com Lucide React icons
+- Componente reutilizável para múltiplos perfis e status
+
+**Serviço confirmarParticipacao** (`src/lib/services/ocorrencias.ts`)
+- Função `confirmarParticipacao(ocorrenciaId, usuarioId, funcao)`
+- **Lógica implementada:**
+  1. Busca vaga em aberto para o perfil específico (MEDICO ou ENFERMEIRO)
+  2. Valida disponibilidade (usuario_id null, confirmado false)
+  3. Atualiza vaga com dados do profissional
+  4. Marca como confirmado (confirmado = true)
+  5. Registra data de confirmação (data_confirmacao = NOW())
+  6. Verifica se todas as vagas foram preenchidas
+  7. Atualiza status da ocorrência para CONFIRMADA automaticamente
+- Validações de erro: "Nenhuma vaga disponível para este perfil"
+- Transação completa com rollback em caso de erro
+
+**Dashboard Médico - Integração do Modal** (`src/app/(dashboard)/medico/page.tsx`)
+- Estados adicionados:
+  - `modalOcorrenciaId` - ID da ocorrência selecionada
+  - `isModalOpen` - Controle de abertura do modal
+  - `isConfirmando` - Estado de loading durante confirmação
+- Handler `handleVerDetalhes(ocorrenciaId)`:
+  - Define ID da ocorrência
+  - Abre modal
+- Handler `handleCloseModal()`:
+  - Fecha modal
+  - Limpa ID selecionado
+- Handler `handleConfirmarParticipacao(ocorrenciaId)`:
+  - Validação de usuário autenticado
+  - Chamada ao serviço confirmarParticipacao
+  - Loading state durante requisição
+  - Toast de sucesso/erro (sonner)
+  - Invalidação de queries (atualização automática):
+    * `ocorrencias-disponiveis` - Atualiza listas
+    * `ocorrencia-detalhes` - Atualiza modal
+  - Fecha modal após confirmação bem-sucedida
+  - Tratamento de erros com feedback visual
+- Modal renderizado no JSX com todas as props necessárias
+- Integração completa com QueryClient para cache
+
+**Componente UI Dialog** (`src/components/ui/dialog.tsx`)
+- Instalado via shadcn/ui
+- Primitivos do Radix UI (@radix-ui/react-dialog)
+- Componentes exportados:
+  - Dialog, DialogTrigger, DialogPortal
+  - DialogOverlay, DialogContent
+  - DialogHeader, DialogFooter, DialogTitle, DialogDescription
+- Estilos personalizados com Tailwind CSS
+- Animações de entrada/saída
+- Acessibilidade completa (ARIA)
+
+### 🔧 Modificado
+
+**Dashboard Médico** (`src/app/(dashboard)/medico/page.tsx`)
+- Removido TODO do handleVerDetalhes (implementado)
+- Adicionados imports: OcorrenciaDetalhesModal, ocorrenciasService, toast, useQueryClient
+- Implementação completa do fluxo de confirmação de participação
+
+**Serviço de Ocorrências** (`src/lib/services/ocorrencias.ts`)
+- Adicionada função confirmarParticipacao
+- Lógica de mudança automática de status
+- Validações de disponibilidade de vagas
+
+### 📦 Dependências
+
+- `@radix-ui/react-dialog@^1.1.15` - Primitivo para modal acessível
+
+### 🐛 Corrigido
+
+- Modal de detalhes implementado (bug conhecido da v0.6.0)
+
+### 🐛 Bugs Conhecidos
+
+- Dropdown "Minha Conta" no header está transparente (corrigir posteriormente)
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 4.1 - Página de Agenda do Médico**
+- Calendário mensal com ocorrências confirmadas
+- Integração com biblioteca de calendário
+- Modal de detalhes integrado
+
+---
+
 ## [0.6.0] - 2025-10-08
 
 ### ✅ Adicionado

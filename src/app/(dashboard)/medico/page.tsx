@@ -5,9 +5,13 @@ import { useMedicoStats } from '@/hooks/useMedicoStats';
 import { useOcorrenciasDisponiveis } from '@/hooks/useOcorrenciasDisponiveis';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { OcorrenciaCard } from '@/components/ocorrencias/OcorrenciaCard';
+import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { ocorrenciasService } from '@/lib/services/ocorrencias';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   DollarSign,
@@ -26,17 +30,59 @@ import { useState } from 'react';
 
 function MedicoDashboardContent() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { stats, isLoading, periodo, setPeriodo } = useMedicoStats(user?.id || 0);
   const { data: ocorrencias, isLoading: isLoadingOcorrencias, error: errorOcorrencias } = useOcorrenciasDisponiveis(
     user?.id,
     'MEDICO'
   );
   const [showPagamentosDetalhes, setShowPagamentosDetalhes] = useState(false);
+  const [modalOcorrenciaId, setModalOcorrenciaId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmando, setIsConfirmando] = useState(false);
 
   // Handler para ver detalhes da ocorrência
   const handleVerDetalhes = (ocorrenciaId: number) => {
-    // TODO: Implementar modal de detalhes (Prompt 3.3)
-    console.log('Ver detalhes da ocorrência:', ocorrenciaId);
+    setModalOcorrenciaId(ocorrenciaId);
+    setIsModalOpen(true);
+  };
+
+  // Handler para fechar modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setModalOcorrenciaId(null);
+  };
+
+  // Handler para confirmar participação
+  const handleConfirmarParticipacao = async (ocorrenciaId: number) => {
+    if (!user?.id) {
+      toast.error('Usuário não identificado');
+      return;
+    }
+
+    setIsConfirmando(true);
+
+    try {
+      await ocorrenciasService.confirmarParticipacao(
+        ocorrenciaId,
+        user.id,
+        'MEDICO'
+      );
+
+      toast.success('Participação confirmada com sucesso!');
+
+      // Atualizar lista de ocorrências
+      queryClient.invalidateQueries({ queryKey: ['ocorrencias-disponiveis'] });
+      queryClient.invalidateQueries({ queryKey: ['ocorrencia-detalhes', ocorrenciaId] });
+
+      // Fechar modal
+      handleCloseModal();
+    } catch (error) {
+      console.error('Erro ao confirmar participação:', error);
+      toast.error('Erro ao confirmar participação. Tente novamente.');
+    } finally {
+      setIsConfirmando(false);
+    }
   };
 
   // Formatar valor em reais
@@ -247,6 +293,16 @@ function MedicoDashboardContent() {
           </div>
         )}
       </div>
+
+      {/* Modal de Detalhes da Ocorrência */}
+      <OcorrenciaDetalhesModal
+        ocorrenciaId={modalOcorrenciaId}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        perfil={user?.tipo_perfil}
+        onConfirmarParticipacao={handleConfirmarParticipacao}
+        isConfirmando={isConfirmando}
+      />
     </div>
   );
 }
