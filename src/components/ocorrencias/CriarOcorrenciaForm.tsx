@@ -185,13 +185,23 @@ export function CriarOcorrenciaForm({
             </Label>
             <Input
               id="data_ocorrencia"
-              type="date"
+              type="text"
               {...register('data_ocorrencia')}
-              min={new Date().toISOString().split('T')[0]}
-              className="cursor-text"
+              placeholder="DD/MM/AAAA"
+              maxLength={10}
+              onInput={(e) => {
+                let value = e.currentTarget.value.replace(/\D/g, '');
+                if (value.length >= 3) {
+                  value = value.slice(0, 2) + '/' + value.slice(2);
+                }
+                if (value.length >= 6) {
+                  value = value.slice(0, 5) + '/' + value.slice(5, 9);
+                }
+                e.currentTarget.value = value;
+              }}
             />
             <p className="text-xs text-gray-500">
-              Digite ou selecione a data (formato: DD/MM/AAAA)
+              Digite a data no formato DD/MM/AAAA (ex: 15/12/2025)
             </p>
             {errors.data_ocorrencia && (
               <p className="text-sm text-red-500 flex items-center gap-1">
@@ -268,11 +278,19 @@ export function CriarOcorrenciaForm({
               </Label>
               <Input
                 id="horario_saida"
-                type="time"
+                type="text"
                 {...register('horario_saida')}
-                className="cursor-text"
+                placeholder="HH:MM"
+                maxLength={5}
+                onInput={(e) => {
+                  let value = e.currentTarget.value.replace(/\D/g, '');
+                  if (value.length >= 3) {
+                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
+                  }
+                  e.currentTarget.value = value;
+                }}
               />
-              <p className="text-xs text-gray-500">Formato: HH:MM</p>
+              <p className="text-xs text-gray-500">Digite o horário (ex: 14:30)</p>
               {errors.horario_saida && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
@@ -287,11 +305,19 @@ export function CriarOcorrenciaForm({
               </Label>
               <Input
                 id="horario_chegada_local"
-                type="time"
+                type="text"
                 {...register('horario_chegada_local')}
-                className="cursor-text"
+                placeholder="HH:MM"
+                maxLength={5}
+                onInput={(e) => {
+                  let value = e.currentTarget.value.replace(/\D/g, '');
+                  if (value.length >= 3) {
+                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
+                  }
+                  e.currentTarget.value = value;
+                }}
               />
-              <p className="text-xs text-gray-500">Formato: HH:MM</p>
+              <p className="text-xs text-gray-500">Digite o horário (ex: 15:00)</p>
               {errors.horario_chegada_local && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
@@ -309,12 +335,20 @@ export function CriarOcorrenciaForm({
               </Label>
               <Input
                 id="horario_termino"
-                type="time"
+                type="text"
                 {...register('horario_termino')}
-                className="cursor-text"
+                placeholder="HH:MM"
+                maxLength={5}
+                onInput={(e) => {
+                  let value = e.currentTarget.value.replace(/\D/g, '');
+                  if (value.length >= 3) {
+                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
+                  }
+                  e.currentTarget.value = value;
+                }}
               />
               <p className="text-xs text-gray-500">
-                Obrigatório para eventos (Formato: HH:MM)
+                {tipoTrabalho === TipoTrabalho.EVENTO ? 'Obrigatório' : 'Opcional'} (ex: 18:00)
               </p>
               {errors.horario_termino && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
@@ -395,9 +429,22 @@ export function CriarOcorrenciaForm({
               </Label>
               <Input
                 id="data_pagamento"
-                type="date"
+                type="text"
                 {...register('data_pagamento')}
+                placeholder="DD/MM/AAAA"
+                maxLength={10}
+                onInput={(e) => {
+                  let value = e.currentTarget.value.replace(/\D/g, '');
+                  if (value.length >= 3) {
+                    value = value.slice(0, 2) + '/' + value.slice(2);
+                  }
+                  if (value.length >= 6) {
+                    value = value.slice(0, 5) + '/' + value.slice(5, 9);
+                  }
+                  e.currentTarget.value = value;
+                }}
               />
+              <p className="text-xs text-gray-500">Data de pagamento (ex: 31/12/2025)</p>
               {errors.data_pagamento && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />

@@ -30,12 +30,35 @@ export const criarOcorrenciaSchema = z
       message: 'Selecione o tipo de trabalho',
     }),
 
-    // Data da ocorrência
+    // Data da ocorrência (aceita DD/MM/YYYY ou YYYY-MM-DD)
     data_ocorrencia: z
       .string({
         message: 'Data da ocorrência é obrigatória',
       })
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD')
+      .min(1, 'Data da ocorrência é obrigatória')
+      .transform((val) => {
+        // Se já está no formato YYYY-MM-DD, retorna direto
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          return val;
+        }
+        // Se está no formato DD/MM/YYYY, converte
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {
+          const [dia, mes, ano] = val.split('/');
+          return `${ano}-${mes}-${dia}`;
+        }
+        return val;
+      })
+      .refine(
+        (data) => {
+          // Valida se é uma data válida
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+            return false;
+          }
+          const dataOcorrencia = new Date(data + 'T00:00:00');
+          return !isNaN(dataOcorrencia.getTime());
+        },
+        { message: 'Data inválida. Use o formato DD/MM/AAAA' }
+      )
       .refine(
         (data) => {
           const dataOcorrencia = new Date(data + 'T00:00:00');
@@ -46,23 +69,37 @@ export const criarOcorrenciaSchema = z
         { message: 'Data não pode ser no passado' }
       ),
 
-    // Horários
+    // Horários (validação flexível)
     horario_saida: z
       .string({
         message: 'Horário de saída é obrigatório',
       })
-      .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM'),
+      .min(1, 'Horário de saída é obrigatório')
+      .refine(
+        (val) => /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val),
+        { message: 'Horário inválido. Use o formato HH:MM (ex: 14:30)' }
+      ),
 
     horario_chegada_local: z
       .string({
-        message: 'Horário previsto no local é obrigatório',
+        message: 'Horário no local é obrigatório',
       })
-      .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM'),
+      .min(1, 'Horário no local é obrigatório')
+      .refine(
+        (val) => /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val),
+        { message: 'Horário inválido. Use o formato HH:MM (ex: 14:30)' }
+      ),
 
     // Horário de término (obrigatório apenas para EVENTO)
     horario_termino: z
       .string()
-      .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM')
+      .refine(
+        (val) => {
+          if (!val || val === '') return true;
+          return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val);
+        },
+        { message: 'Horário inválido. Use o formato HH:MM (ex: 18:00)' }
+      )
       .optional()
       .nullable(),
 
@@ -100,12 +137,35 @@ export const criarOcorrenciaSchema = z
       .pipe(z.coerce.number())
       .pipe(z.number().min(0, 'Valor não pode ser negativo')),
 
-    // Data de pagamento
+    // Data de pagamento (aceita DD/MM/YYYY ou YYYY-MM-DD)
     data_pagamento: z
       .string({
         message: 'Data de pagamento é obrigatória',
       })
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
+      .min(1, 'Data de pagamento é obrigatória')
+      .transform((val) => {
+        // Se já está no formato YYYY-MM-DD, retorna direto
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          return val;
+        }
+        // Se está no formato DD/MM/YYYY, converte
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {
+          const [dia, mes, ano] = val.split('/');
+          return `${ano}-${mes}-${dia}`;
+        }
+        return val;
+      })
+      .refine(
+        (data) => {
+          // Valida se é uma data válida
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+            return false;
+          }
+          const dataPagamento = new Date(data + 'T00:00:00');
+          return !isNaN(dataPagamento.getTime());
+        },
+        { message: 'Data inválida. Use o formato DD/MM/AAAA' }
+      ),
   })
   .refine(
     (data) => {
