@@ -175,8 +175,11 @@ export function useOcorrenciasDisponiveis(
       };
     },
     enabled: !!usuarioId,
-    // Otimização: Removido refetchInterval para evitar polling desnecessário
+    // Otimização: Cache aumentado para evitar recarregamentos desnecessários
     // As queries serão invalidadas manualmente após ações (confirmar participação)
-    staleTime: 1000 * 60 * 2, // 2 minutos - dados considerados frescos
+    staleTime: 1000 * 60 * 5, // 5 minutos - dados considerados frescos
+    gcTime: 1000 * 60 * 10, // 10 minutos - mantém em cache mesmo sem uso
+    refetchOnWindowFocus: true, // Revalida ao voltar para a janela
+    refetchOnMount: true, // Revalida ao montar o componente
   });
 }

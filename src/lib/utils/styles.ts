@@ -42,8 +42,17 @@ export function getBadgeColor(type: string, value: string): string {
   if (type === 'vaga_status') {
     // Cores para status de vaga (disponível/confirmado)
     return value === 'disponivel'
-      ? 'bg-green-100 text-green-800 border-green-200'
-      : 'bg-blue-100 text-blue-800 border-blue-200';
+      ? 'bg-blue-100 text-blue-800 border-blue-200'
+      : 'bg-green-100 text-green-800 border-green-200';
+  }
+
+  // Fallback para status "confirmado" usado nos participantes
+  if (value === 'confirmado') {
+    return 'bg-green-100 text-green-800 border-green-200';
+  }
+
+  if (value === 'disponivel') {
+    return 'bg-blue-100 text-blue-800 border-blue-200';
   }
 
   return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -51,11 +60,12 @@ export function getBadgeColor(type: string, value: string): string {
 
 /**
  * Retorna classes CSS para badges de status de ocorrência
+ * Cores consistentes com o calendário
  */
 export const STATUS_COLORS: Record<string, string> = {
   EM_ABERTO: 'bg-blue-100 text-blue-800 border-blue-200',
   CONFIRMADA: 'bg-green-100 text-green-800 border-green-200',
-  EM_ANDAMENTO: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  EM_ANDAMENTO: 'bg-amber-100 text-amber-800 border-amber-200',
   CONCLUIDA: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 

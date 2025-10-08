@@ -38,11 +38,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       'x-application-name': 'sga',
     },
+    fetch: (url, options = {}) => {
+      // Aumentar timeout para 30 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      return fetch(url, {
+        ...options,
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
+    },
   },
   // Configuração de network para Safari
   realtime: {
     params: {
       eventsPerSecond: 2,
     },
+  },
+  db: {
+    schema: 'public',
   },
 });

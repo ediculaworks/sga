@@ -84,7 +84,7 @@ const OcorrenciaCardComponent = ({
           <div className="flex items-center gap-1.5 text-gray-600">
             <Calendar className="h-4 w-4" />
             <span>
-              {format(new Date(ocorrencia.data_ocorrencia), "dd 'de' MMMM", {
+              {format(new Date(ocorrencia.data_ocorrencia + 'T00:00:00'), "dd 'de' MMMM", {
                 locale: ptBR,
               })}
             </span>

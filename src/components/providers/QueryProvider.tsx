@@ -12,6 +12,9 @@ import { useState, useEffect } from 'react';
  * - Revalida queries após inatividade
  * - Detecta focus da janela para atualizar dados
  * - Cache otimizado para Safari/Mac
+ * - Tempos de cache aumentados (5min stale, 15min gc)
+ * - Detecta inatividade de 5 minutos e invalida queries
+ * - Revalida ao voltar para a tab após 2 minutos
  */
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
@@ -20,10 +23,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Tempo de cache reduzido: 2 minutos
-            staleTime: 1000 * 60 * 2,
-            // Tempo antes de remover do cache: 5 minutos
-            gcTime: 1000 * 60 * 5,
+            // Tempo de cache: 5 minutos (dados considerados frescos)
+            staleTime: 1000 * 60 * 5,
+            // Tempo antes de remover do cache: 15 minutos
+            gcTime: 1000 * 60 * 15,
             // Retry em caso de erro
             retry: 2,
             retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),

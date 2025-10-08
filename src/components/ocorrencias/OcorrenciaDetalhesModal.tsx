@@ -133,6 +133,8 @@ export function OcorrenciaDetalhesModal({
       return data as unknown as OcorrenciaDetalhes;
     },
     enabled: isOpen && !!ocorrenciaId,
+    staleTime: 1000 * 60 * 3, // 3 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos
   });
 
   // Query para buscar pacientes atendidos na ocorrência (apenas para enfermeiro em ocorrência EM_ANDAMENTO)
@@ -174,6 +176,8 @@ export function OcorrenciaDetalhesModal({
       !!ocorrenciaId &&
       perfil === TipoPerfil.ENFERMEIRO &&
       ocorrencia?.status_ocorrencia === 'EM_ANDAMENTO',
+    staleTime: 1000 * 60 * 3, // 3 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos
   });
 
   // Função para salvar nota de enfermeiro
@@ -325,7 +329,7 @@ export function OcorrenciaDetalhesModal({
                 <Calendar className="w-4 h-4 text-gray-600" />
                 <span className="text-sm text-gray-600">Data:</span>
                 <span className="font-medium text-gray-900">
-                  {format(new Date(ocorrencia.data_ocorrencia), 'PPP', {
+                  {format(new Date(ocorrencia.data_ocorrencia + 'T00:00:00'), 'PPP', {
                     locale: ptBR,
                   })}
                 </span>
