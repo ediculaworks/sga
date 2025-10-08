@@ -23,7 +23,8 @@
       "Bash(start https://supabase.com/dashboard/project/tclvrcgoxqsimbqtnyla/sql/new)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Implementar FASE 3.2 - Lista de Ocorrências no Dashboard Médico\n\n- Corrigir hook useOcorrenciasDisponiveis com nomes corretos de colunas do schema\n  * status → status_ocorrencia\n  * horario_no_local → horario_chegada_local\n  * tipo_profissional → funcao\n  * Remover campo vaga_disponivel (não existe no schema)\n\n- Adicionar scripts de diagnóstico e correção de permissões\n  * diagnose-auth.ts: verificar estado da autenticação\n  * reset-user-password.ts: resetar senha de usuários\n  * fix-all-permissions.sql: configurar RLS em todas as tabelas\n  * seed-corrected.sql: popular banco com dados de teste\n\n- Configurar permissões RLS para todas as tabelas do sistema\n  * Usuarios, motoristas, escala\n  * Ambulancias, equipamentos, estoque, gastos\n  * Ocorrencias, participantes\n  * Pacientes, atendimentos\n  * Notificações, rastreamento, logs\n\n- Dashboard médico exibindo ocorrências confirmadas e disponíveis\n  * Seção de ocorrências confirmadas pelo profissional\n  * Seção de ocorrências em aberto com vagas\n  * Filtro inteligente por escala e disponibilidade\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npx supabase:*)"
     ],
     "deny": [],
     "ask": []

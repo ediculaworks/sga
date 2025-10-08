@@ -267,50 +267,103 @@ export const ocorrenciasService = {
    * Confirma participação de um profissional em uma ocorrência
    */
   async confirmarParticipacao(ocorrenciaId: number, usuarioId: number, funcao: string) {
-    // 1. Buscar uma vaga em aberto para este perfil
-    const { data: vagaDisponivel, error: vagaError } = await supabase
-      .from('ocorrencias_participantes')
-      .select('id')
-      .eq('ocorrencia_id', ocorrenciaId)
-      .eq('funcao', funcao)
-      .eq('confirmado', false)
-      .is('usuario_id', null)
-      .limit(1)
-      .single();
+    try {
+      // 1. Verificar se o usuário já está participando desta ocorrência
+      const { data: participacaoExistente, error: checkError } = await supabase
+        .from('ocorrencias_participantes')
+        .select('id, confirmado')
+        .eq('ocorrencia_id', ocorrenciaId)
+        .eq('usuario_id', usuarioId)
+        .maybeSingle();
 
-    if (vagaError || !vagaDisponivel) {
-      throw new Error('Nenhuma vaga disponível para este perfil');
+      if (checkError) {
+        console.error('Erro ao verificar participação existente:', checkError);
+        throw new Error('Erro ao verificar participação');
+      }
+
+      if (participacaoExistente) {
+        if (participacaoExistente.confirmado) {
+          throw new Error('Você já confirmou participação nesta ocorrência');
+        }
+        // Se existe mas não está confirmada, apenas confirmar
+        const { data: participante, error: updateError } = await supabase
+          .from('ocorrencias_participantes')
+          .update({
+            confirmado: true,
+            data_confirmacao: new Date().toISOString(),
+          })
+          .eq('id', participacaoExistente.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Erro ao confirmar participação existente:', updateError);
+          throw updateError;
+        }
+
+        return participante;
+      }
+
+      // 2. Buscar uma vaga em aberto para este perfil (usuario_id NULL)
+      const { data: vagasDisponiveis, error: vagaError } = await supabase
+        .from('ocorrencias_participantes')
+        .select('id')
+        .eq('ocorrencia_id', ocorrenciaId)
+        .eq('funcao', funcao)
+        .eq('confirmado', false)
+        .is('usuario_id', null)
+        .limit(1);
+
+      if (vagaError) {
+        console.error('Erro ao buscar vagas disponíveis:', vagaError);
+        throw new Error('Erro ao buscar vagas disponíveis');
+      }
+
+      if (!vagasDisponiveis || vagasDisponiveis.length === 0) {
+        throw new Error('Nenhuma vaga disponível para este perfil');
+      }
+
+      const vagaDisponivel = vagasDisponiveis[0];
+
+      // 3. Atualizar a vaga com os dados do profissional
+      const { data: participante, error: updateError } = await supabase
+        .from('ocorrencias_participantes')
+        .update({
+          usuario_id: usuarioId,
+          confirmado: true,
+          data_confirmacao: new Date().toISOString(),
+        })
+        .eq('id', vagaDisponivel.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Erro ao atualizar vaga:', updateError);
+        throw updateError;
+      }
+
+      // 4. Verificar se todas as vagas foram preenchidas
+      const { data: todasVagas, error: vagasError } = await supabase
+        .from('ocorrencias_participantes')
+        .select('confirmado')
+        .eq('ocorrencia_id', ocorrenciaId);
+
+      if (vagasError) {
+        console.error('Erro ao verificar vagas:', vagasError);
+        // Não falhar aqui, pois a confirmação já foi feita
+      } else {
+        // 5. Se todas as vagas estiverem confirmadas, mudar status para CONFIRMADA
+        const todasConfirmadas = todasVagas?.every((v) => v.confirmado) ?? false;
+
+        if (todasConfirmadas) {
+          await this.atualizarStatus(ocorrenciaId, 'CONFIRMADA');
+        }
+      }
+
+      return participante;
+    } catch (error: any) {
+      console.error('Erro em confirmarParticipacao:', error);
+      throw error;
     }
-
-    // 2. Atualizar a vaga com os dados do profissional
-    const { data: participante, error: updateError } = await supabase
-      .from('ocorrencias_participantes')
-      .update({
-        usuario_id: usuarioId,
-        confirmado: true,
-        data_confirmacao: new Date().toISOString(),
-      })
-      .eq('id', vagaDisponivel.id)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    // 3. Verificar se todas as vagas foram preenchidas
-    const { data: todasVagas, error: vagasError } = await supabase
-      .from('ocorrencias_participantes')
-      .select('confirmado')
-      .eq('ocorrencia_id', ocorrenciaId);
-
-    if (vagasError) throw vagasError;
-
-    // 4. Se todas as vagas estiverem confirmadas, mudar status para CONFIRMADA
-    const todasConfirmadas = todasVagas?.every((v) => v.confirmado) ?? false;
-
-    if (todasConfirmadas) {
-      await this.atualizarStatus(ocorrenciaId, 'CONFIRMADA');
-    }
-
-    return participante;
   }
 };

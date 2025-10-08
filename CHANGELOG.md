@@ -5,6 +5,231 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.7.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 4.1 - Página de Agenda do Médico
+
+**Componente AgendaMedicoPage** (`src/app/(dashboard)/medico/agenda/page.tsx`)
+- Calendário mensal completo com React Big Calendar
+- Visualização de todas as ocorrências confirmadas do médico
+- **4 Visualizações disponíveis:**
+  - Mês (padrão)
+  - Semana
+  - Dia
+  - Agenda (lista)
+- **Funcionalidades:**
+  - Navegação entre meses/semanas (botões anterior/próximo)
+  - Botão "Hoje" para voltar à data atual
+  - Eventos clicáveis que abrem modal de detalhes
+  - Cores por status da ocorrência:
+    * Cinza: EM_ABERTO
+    * Azul: CONFIRMADA
+    * Verde: EM_ANDAMENTO
+    * Roxo: CONCLUIDA
+  - Legenda de cores explicativa
+  - Responsivo (mobile-first)
+- **Query otimizada:**
+  - Busca apenas ocorrências confirmadas pelo médico
+  - Join com tabela ocorrencias
+  - Cache de 5 minutos (React Query)
+- **Integração com Modal:**
+  - Ao clicar em evento: abre OcorrenciaDetalhesModal
+  - Mostra detalhes completos da ocorrência
+  - Permite interação (se aplicável)
+
+**Biblioteca React Big Calendar**
+- Instalada versão mais recente
+- Localização em português (pt-BR)
+- Configuração com date-fns
+- CSS customizado para match com design do sistema
+
+**Estilos Customizados** (`src/app/globals.css`)
+- Estilização completa do calendário
+- Cores consistentes com Tailwind
+- Hover effects em eventos
+- Botões estilizados (toolbar)
+- Responsividade mobile
+- Highlight do dia atual (azul claro)
+- Bordas arredondadas e sombras
+
+**Lógica de Horários:**
+- Horário de início: `horario_saida`
+- Horário de término:
+  - Se houver `horario_termino`: usa esse
+  - Se houver `horario_chegada_local`: +2h após chegada
+  - Padrão: +4h após saída
+- Exibição de duração no evento
+
+**Navegação Atualizada** (`src/config/navigation.ts`)
+- Link "Agenda" já existe para perfil MEDICO
+- Rota: `/medico/agenda`
+- Ícone: Calendar (Lucide React)
+
+### 📦 Dependências
+
+- `react-big-calendar@^1.15.0` - Biblioteca de calendário
+- `date-fns@^4.1.0` - Já instalada, usada para localização
+
+### 🎯 Funcionalidades Implementadas
+
+**Visualização de Eventos:**
+- Eventos mostram: número da ocorrência + tipo de trabalho
+- Cores diferentes por status para fácil identificação
+- Múltiplos eventos no mesmo dia empilhados corretamente
+
+**Interatividade:**
+- Clicar em evento: abre detalhes
+- Navegar entre períodos: mantém estado
+- Trocar visualização: persiste eventos
+
+**Performance:**
+- Lazy loading de dados
+- Cache inteligente (5min)
+- Loading state durante fetch
+- Otimização de re-renders
+
+### 📝 Notas Técnicas
+
+**Configuração do Localizer:**
+```typescript
+const localizer = momentLocalizer({
+  format: (date, formatStr) => format(date, formatStr, { locale: ptBR }),
+  parse: (dateStr, formatStr) => parse(dateStr, formatStr, new Date(), { locale: ptBR }),
+  startOfWeek: () => startOfWeek(new Date(), { locale: ptBR }),
+  getDay: (date) => getDay(date),
+  locales: { 'pt-BR': ptBR },
+});
+```
+
+**Estrutura de Evento:**
+```typescript
+interface CalendarEvent {
+  id: number;
+  title: string;
+  start: Date;
+  end: Date;
+  resource: {
+    ocorrenciaId: number;
+    status: string;
+    tipo: string;
+  };
+}
+```
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 5.1 - Banco de Dados de Pacientes**
+- Tabela de pacientes compartilhada (Médico e Chefe dos Médicos)
+- Busca e filtros
+- Histórico de atendimentos
+
+---
+
+## [0.6.3] - 2025-10-08
+
+### 🐛 Corrigido
+
+#### Nome de Coluna em Scripts SQL
+
+**Problema:**
+- Erro `column "numero" does not exist` ao executar `verificar-e-criar-vagas.sql`
+- Scripts usavam `o.numero` mas o schema define `numero_ocorrencia`
+
+**Correção:**
+- Atualizado `verificar-e-criar-vagas.sql` com nome correto: `numero_ocorrencia`
+- Verificado schema em `supabase/schema.sql:234`
+- Scripts agora executam sem erros
+
+### 📝 Adicionado
+
+#### Scripts de Diagnóstico para Erro de Confirmação
+
+**Problema Recorrente:**
+- Erro "Nenhuma vaga disponível para este perfil" ao confirmar participação
+- Tentativa anterior de correção falhou
+
+**Scripts Criados:**
+
+1. **`scripts/diagnostico-ocorrencias-participantes.sql`**
+   - Diagnóstico completo do schema da tabela
+   - Verifica estrutura, constraints UNIQUE, índices
+   - Lista políticas RLS e permissões GRANT
+   - Analisa dados existentes (vagas vazias vs preenchidas)
+   - Mostra distribuição de vagas por ocorrência
+   - **Execute este script primeiro para identificar a causa**
+
+2. **`scripts/verificar-e-criar-vagas.sql`**
+   - Lista ocorrências EM_ABERTO
+   - Mostra participantes existentes
+   - Template para criar vagas vazias de teste
+   - Verificação final do resultado
+
+3. **`docs/md/SOLUCAO_ERRO_CONFIRMACAO.md`**
+   - Documentação completa do problema
+   - Análise da causa raiz
+   - Passo a passo para resolução
+   - Checklist de verificação
+   - 3 possíveis causas identificadas
+
+**Causas Possíveis Identificadas:**
+
+1. **Migration não executada**: Script `fix-ocorrencias-participantes-schema.sql` não foi rodado
+   - `usuario_id` ainda é NOT NULL (deveria ser NULLABLE)
+   - Impossível ter vagas vazias
+
+2. **Vagas não criadas**: Ocorrências EM_ABERTO sem participantes
+   - Mesmo com schema correto, faltam registros com `usuario_id = NULL`
+
+3. **Dados inconsistentes**: Seed criou ocorrências sem vagas
+
+**Próximos Passos para o Usuário:**
+
+1. Executar `diagnostico-ocorrencias-participantes.sql` no Supabase SQL Editor
+2. Analisar resultados (especialmente seções 1, 3, 6, 7)
+3. Executar `fix-ocorrencias-participantes-schema.sql` se `usuario_id` não for NULLABLE
+4. Executar `verificar-e-criar-vagas.sql` para criar vagas de teste
+5. Testar confirmação novamente
+
+**Referência Completa:** `docs/md/SOLUCAO_ERRO_CONFIRMACAO.md`
+
+---
+
+## [0.6.2] - 2025-10-08
+
+### 🐛 Corrigido
+
+#### Erro 400/406 ao Confirmar Participação em Ocorrências
+
+**Problema:**
+- Erro HTTP 400 (Bad Request) e 406 (Not Acceptable) ao tentar confirmar participação em ocorrências
+- Schema incompatível: `usuario_id` era NOT NULL, mas código tentava buscar vagas vazias (NULL)
+- Constraint `UNIQUE(ocorrencia_id, usuario_id)` impedia múltiplas vagas em aberto
+
+**Solução:**
+
+**1. Script de Migração de Schema** (`scripts/fix-ocorrencias-participantes-schema.sql`)
+- Tornou `usuario_id` NULLABLE para permitir vagas em aberto
+- Removeu constraint UNIQUE antiga
+- Criou índice único parcial que permite múltiplas vagas vazias mas previne duplicatas quando preenchidas
+- Atualizou políticas RLS para INSERT e UPDATE
+
+**2. Função confirmarParticipacao Refatorada** (`src/lib/services/ocorrencias.ts:269`)
+- Usa `.limit(1)` em vez de `.single()` para buscar vagas disponíveis
+- Verifica se usuário já está participando antes de confirmar
+- Previne confirmações duplicadas
+- Adiciona logs de erro detalhados para debugging
+- Usa `maybeSingle()` para queries que podem retornar zero resultados
+- Tratamento de erro mais robusto com try/catch
+
+**Arquivos Modificados:**
+- `scripts/fix-ocorrencias-participantes-schema.sql` (criado)
+- `src/lib/services/ocorrencias.ts` (linha 269-368)
+- `docs/md/CORRECAO_OCORRENCIAS_PARTICIPANTES.md` (documentação completa)
+
+**Referência:** `docs/md/CORRECAO_OCORRENCIAS_PARTICIPANTES.md`
+
 ## [0.6.1] - 2025-10-08
 
 ### ✅ Adicionado
