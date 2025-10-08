@@ -113,6 +113,23 @@ yarn dev
 pnpm dev
 ```
 
+> 📱 **Acesso via WiFi (Rede Local):**
+>
+> O projeto está configurado para aceitar conexões de outros dispositivos na mesma rede WiFi!
+>
+> 1. Execute `npm run dev` no seu computador
+> 2. Descubra o IP local do seu computador:
+>    - **Windows**: `ipconfig` (procure por "IPv4 Address" na interface WiFi)
+>    - **Mac/Linux**: `ifconfig` ou `ip addr` (procure pelo endereço da interface de rede)
+> 3. Em outros dispositivos (celular, tablet, outro PC) na mesma rede WiFi:
+>    - Acesse: `http://SEU_IP_LOCAL:3000`
+>    - Exemplo: `http://192.168.1.100:3000`
+>
+> ⚠️ **Importante**:
+> - Todos os dispositivos devem estar na **mesma rede WiFi**
+> - Configure o firewall do Windows para permitir conexões na porta 3000
+> - O Supabase deve estar configurado para aceitar requisições de qualquer origem durante desenvolvimento
+
 5. **Configure o Banco de Dados**
 
 ⚠️ **Importante**: O banco de dados deve ser configurado antes de usar o sistema.

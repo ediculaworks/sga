@@ -16,7 +16,10 @@
       "Bash(taskkill:*)",
       "Bash(cmd /c taskkill:*)",
       "Bash(dir:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(timeout 10 bash -c 'until curl -s http://localhost:3004 > /dev/null; do sleep 1; done && echo \"\"Server ready\"\"')",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

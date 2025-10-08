@@ -1,83 +1,251 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { useMedicoStats } from '@/hooks/useMedicoStats';
+import { useOcorrenciasDisponiveis } from '@/hooks/useOcorrenciasDisponiveis';
+import { StatsCard } from '@/components/dashboard/StatsCard';
+import { OcorrenciaCard } from '@/components/ocorrencias/OcorrenciaCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import {
+  Activity,
+  DollarSign,
+  Ambulance,
+  Calendar,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
+import { useState } from 'react';
 
 /**
- * Dashboard do Médico (Placeholder)
+ * Dashboard do Médico
+ *
+ * Exibe estatísticas de ocorrências atendidas, pagamentos pendentes e remoções.
  */
 
 function MedicoDashboardContent() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
+  const { stats, isLoading, periodo, setPeriodo } = useMedicoStats(user?.id || 0);
+  const { data: ocorrencias, isLoading: isLoadingOcorrencias, error: errorOcorrencias } = useOcorrenciasDisponiveis(
+    user?.id,
+    'MEDICO'
+  );
+  const [showPagamentosDetalhes, setShowPagamentosDetalhes] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+  // Handler para ver detalhes da ocorrência
+  const handleVerDetalhes = (ocorrenciaId: number) => {
+    // TODO: Implementar modal de detalhes (Prompt 3.3)
+    console.log('Ver detalhes da ocorrência:', ocorrenciaId);
+  };
+
+  // Formatar valor em reais
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  // Labels dos períodos
+  const periodoLabels = {
+    semana: 'Esta semana',
+    mes: 'Este mês',
+    ano: 'Este ano',
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard do Médico</h1>
-            <p className="text-gray-600 mt-1">Bem-vindo, {user?.nome_completo}</p>
-          </div>
-          <Button onClick={handleLogout} variant="outline">
-            Sair
+    <div className="space-y-6">
+      {/* Header com filtro de período */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+          <p className="text-gray-600 mt-1">Visão geral das suas atividades</p>
+        </div>
+
+        {/* Filtro de período */}
+        <div className="flex gap-2">
+          <Button
+            variant={periodo === 'semana' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPeriodo('semana')}
+          >
+            Semana
+          </Button>
+          <Button
+            variant={periodo === 'mes' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPeriodo('mes')}
+          >
+            Mês
+          </Button>
+          <Button
+            variant={periodo === 'ano' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPeriodo('ano')}
+          >
+            Ano
           </Button>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ocorrências Atendidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">0</p>
-              <p className="text-sm text-gray-500">Esta semana</p>
-            </CardContent>
-          </Card>
+      {/* Cards de Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card 1: Ocorrências Atendidas */}
+        <StatsCard
+          title="Ocorrências Atendidas"
+          value={stats.ocorrenciasAtendidas.total}
+          description={periodoLabels[periodo]}
+          icon={Activity}
+          iconColor="text-blue-600"
+          trend={
+            stats.ocorrenciasAtendidas.trend !== 0
+              ? {
+                  value: Math.abs(stats.ocorrenciasAtendidas.trend),
+                  isPositive: stats.ocorrenciasAtendidas.trend > 0,
+                  label: 'vs. período anterior',
+                }
+              : undefined
+          }
+          loading={isLoading}
+        />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>A Receber</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">R$ 0,00</p>
-              <p className="text-sm text-gray-500">Pagamentos pendentes</p>
-            </CardContent>
-          </Card>
+        {/* Card 2: Ocorrências a Receber */}
+        <StatsCard
+          title="A Receber"
+          value={formatCurrency(stats.ocorrenciasAReceber.valorTotal)}
+          description={`${stats.ocorrenciasAReceber.total} ${
+            stats.ocorrenciasAReceber.total === 1 ? 'pagamento pendente' : 'pagamentos pendentes'
+          }`}
+          icon={DollarSign}
+          iconColor="text-green-600"
+          onClick={() => setShowPagamentosDetalhes(!showPagamentosDetalhes)}
+          loading={isLoading}
+        />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Remoções</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-orange-600">0</p>
-              <p className="text-sm text-gray-500">Este mês</p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Card 3: Remoções */}
+        <StatsCard
+          title="Remoções"
+          value={stats.remocoes.total}
+          description={periodoLabels[periodo]}
+          icon={Ambulance}
+          iconColor="text-orange-600"
+          loading={isLoading}
+        />
+      </div>
 
-        <Card className="mt-6">
+      {/* Detalhes de Pagamentos Pendentes */}
+      {showPagamentosDetalhes && stats.ocorrenciasAReceber.itens.length > 0 && (
+        <Card>
           <CardHeader>
-            <CardTitle>Dados do Usuário</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-green-600" />
+              Pagamentos Pendentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <p><strong>Nome:</strong> {user?.nome_completo}</p>
-              <p><strong>Email:</strong> {user?.email}</p>
-              <p><strong>CPF:</strong> {user?.cpf}</p>
-              <p><strong>Perfil:</strong> {user?.tipo_perfil}</p>
-              <p><strong>Status:</strong> {user?.ativo ? 'Ativo' : 'Inativo'}</p>
+            <div className="space-y-3">
+              {stats.ocorrenciasAReceber.itens.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">Ocorrência #{item.id}</p>
+                    <p className="text-sm text-gray-500">
+                      Pagamento previsto: {new Date(item.data).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-green-600">{formatCurrency(item.valor)}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Seção de Ocorrências Confirmadas */}
+      {ocorrencias && ocorrencias.confirmadas.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900">
+            Minhas Ocorrências Confirmadas
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ocorrencias.confirmadas.map((ocorrencia) => (
+              <OcorrenciaCard
+                key={ocorrencia.id}
+                ocorrencia={ocorrencia}
+                variant="confirmed"
+                onVerDetalhes={handleVerDetalhes}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Seção de Ocorrências Disponíveis */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-gray-900">
+          Ocorrências Disponíveis
+        </h3>
+
+        {/* Loading State */}
+        {isLoadingOcorrencias && (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center space-y-3">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto" />
+                <p className="text-gray-600">Carregando ocorrências...</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error State */}
+        {errorOcorrencias && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="flex items-center gap-3 py-4">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-red-900">Erro ao carregar ocorrências</p>
+                <p className="text-sm text-red-700 mt-1">
+                  Tente recarregar a página. Se o problema persistir, entre em contato com o suporte.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty State */}
+        {!isLoadingOcorrencias && !errorOcorrencias && ocorrencias?.disponiveis.length === 0 && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                Nenhuma ocorrência disponível
+              </h4>
+              <p className="text-gray-600 max-w-md mx-auto">
+                No momento não há ocorrências em aberto que correspondam ao seu perfil e disponibilidade.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Lista de Ocorrências Disponíveis */}
+        {!isLoadingOcorrencias && !errorOcorrencias && ocorrencias && ocorrencias.disponiveis.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ocorrencias.disponiveis.map((ocorrencia) => (
+              <OcorrenciaCard
+                key={ocorrencia.id}
+                ocorrencia={ocorrencia}
+                variant="default"
+                onVerDetalhes={handleVerDetalhes}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

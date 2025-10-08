@@ -1,9 +1,360 @@
 # Changelog
 
-Todas as mudan�as not�veis neste projeto ser�o documentadas neste arquivo.
+Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
-O formato � baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
+O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+
+## [0.6.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Dashboard Médico - Lista de Ocorrências (FASE 3.2)
+
+**Componente OcorrenciaCard** (`src/components/ocorrencias/OcorrenciaCard.tsx`)
+- Componente reutilizável para exibir cards de ocorrências
+- Props: ocorrencia, variant (default | confirmed), onVerDetalhes
+- Exibe: número, tipo de trabalho, tipo de ambulância, data, horário, local
+- Badges coloridos para status e tipo de trabalho
+- Indicador de vagas disponíveis (para ocorrências EM_ABERTO)
+- Variant "confirmed" com destaque verde para ocorrências já confirmadas pelo profissional
+- Integração com date-fns para formatação de datas em português
+- Responsivo e com hover effects
+
+**Hook useOcorrenciasDisponiveis** (`src/hooks/useOcorrenciasDisponiveis.ts`)
+- Hook customizado para buscar ocorrências disponíveis com filtro inteligente
+- Parâmetros: usuarioId, tipoPerfil (MEDICO ou ENFERMEIRO)
+- **Filtros aplicados:**
+  - Remove ocorrências em dias que o profissional está de folga (escala)
+  - Remove conflitos de horário (profissional já alocado)
+  - Filtra apenas ocorrências EM_ABERTO com vagas ou já confirmadas pelo profissional
+  - Verifica vagas específicas para o tipo de perfil (médico/enfermeiro)
+- **Retorna dois grupos:**
+  - `confirmadas`: Ocorrências onde o profissional já está confirmado
+  - `disponiveis`: Ocorrências em aberto com vagas disponíveis
+- Query com join em ocorrencias_participantes e escala
+- Refetch automático a cada 30 segundos
+- Ordenação por data (mais próximas primeiro)
+
+**Dashboard Médico Atualizado** (`src/app/(dashboard)/medico/page.tsx`)
+- Integração com useOcorrenciasDisponiveis
+- **Seção "Minhas Ocorrências Confirmadas":**
+  - Exibe ocorrências já confirmadas pelo médico
+  - Cards com variant "confirmed" (destaque verde)
+  - Oculta se não houver confirmadas
+- **Seção "Ocorrências Disponíveis":**
+  - Lista de ocorrências em aberto com vagas
+  - Grid responsivo (1 coluna mobile, 2 tablet, 3 desktop)
+  - **Estados de UI:**
+    - Loading: Spinner animado com mensagem
+    - Error: Card vermelho com ícone de alerta e mensagem
+    - Empty: Card informativo quando não há ocorrências
+    - Success: Grid de cards com ocorrências
+- Handler handleVerDetalhes para abrir modal (próximo prompt)
+- Refatoração da estrutura para melhor organização
+
+### 📦 Dependências
+
+- `date-fns@^4.1.0` - Biblioteca para formatação e manipulação de datas
+
+### 🐛 Bugs Conhecidos
+
+- Dropdown "Minha Conta" no header está transparente (corrigir posteriormente)
+- Modal de detalhes ainda não implementado (Prompt 3.3)
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 3.3 - Modal de Detalhes da Ocorrência (Status EM_ABERTO)**
+
+---
+
+## [0.5.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Configuração WiFi e Correção de Autenticação
+
+**WiFi/Rede Local**
+- Sistema habilitado para acesso via WiFi na rede local
+- Scripts `dev` e `start` configurados com `-H 0.0.0.0`
+- Documentação completa em README.md com instruções de acesso via IP local
+
+**React Query Provider** (`src/components/providers/QueryProvider.tsx`)
+- Configurado QueryClientProvider para toda a aplicação
+- Cache padrão: 5 minutos (staleTime)
+- Garbage collection: 10 minutos
+- Retry automático em caso de erro
+- Integrado no layout.tsx principal
+
+**Scripts de Gerenciamento de Usuários**
+- `scripts/create-auth-users.ts` - Cria usuários no Supabase Auth
+- `scripts/fix-auth-users.ts` - Deleta e recria usuários com senhas corretas
+- `scripts/test-auth.ts` - Testa autenticação
+- Todos os 6 perfis criados no Supabase Auth com senha "senha123"
+- Emails confirmados automaticamente
+
+**Documentação**
+- `docs/RESOLVER_ERRO_LOGIN.md` - Guia completo de troubleshooting
+- Instruções para criar usuários manualmente ou via script
+- Lista de todas as credenciais de teste
+
+### 🐛 Corrigido
+
+- Erro "Invalid login credentials" - usuários recriados no Supabase Auth
+- Erro do React Query - QueryProvider adicionado ao layout
+- Variável SUPABASE_SERVICE_ROLE_KEY adicionada ao .env.local
+
+### 📦 Dependências
+
+- `tsx@^4.20.6` - Executor TypeScript para scripts
+- `dotenv@^17.2.3` - Carregamento de variáveis de ambiente
+
+### 🐛 Bugs Conhecidos
+
+- Dropdown "Minha Conta" no header está transparente (corrigir posteriormente)
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 3.2 - Dashboard Médico: Lista de Ocorrências**
+
+---
+
+## [0.4.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Dashboard do Médico com Estatísticas (FASE 3.1)
+
+**Componente StatsCard** (`src/components/dashboard/StatsCard.tsx`)
+- Componente reutilizável para exibição de estatísticas
+- Props: title, value, description, icon, iconColor, trend, onClick, loading
+- Suporte a ícones Lucide React com cores customizáveis
+- Indicador de tendência (trend):
+  - Ícones TrendingUp/TrendingDown
+  - Percentual em verde (positivo) ou vermelho (negativo)
+  - Label opcional (ex: "vs. período anterior")
+- Loading skeleton animado durante carregamento
+- Efeito hover com sombra e borda azul (quando clicável)
+- Transições suaves em todas as interações
+
+**Hook useMedicoStats** (`src/hooks/useMedicoStats.ts`)
+- Hook customizado para buscar estatísticas do médico
+- Integração com React Query (@tanstack/react-query) para cache
+- Filtro de período: semana, mês, ano
+- **Estatística 1 - Ocorrências Atendidas:**
+  - Total de ocorrências confirmadas pelo médico
+  - Status: CONCLUIDA
+  - Cálculo de trend vs. período anterior
+  - Query: ocorrencias_participantes JOIN ocorrencias
+- **Estatística 2 - Ocorrências a Receber:**
+  - Total de pagamentos pendentes
+  - Valor total em reais (R$)
+  - Lista de itens individuais (id, data, valor)
+  - Query: ocorrencias_participantes com pago=false
+- **Estatística 3 - Remoções:**
+  - Total de atendimentos com remoção hospitalar
+  - Filtrado por período
+  - Query: atendimentos com remocao=true
+- Estados de loading individuais para cada query
+- Função getDateRange() para calcular datas baseado no período
+
+**Dashboard Médico** (`src/app/(dashboard)/medico/page.tsx`)
+- Substituição dos cards placeholder por StatsCard reais
+- Integração com useMedicoStats para dados dinâmicos
+- Header com filtros de período:
+  - Botões Semana/Mês/Ano
+  - Destaque visual no período ativo
+- Grid responsivo de 3 cards:
+  - **Card 1**: Ocorrências Atendidas (ícone Activity, azul)
+  - **Card 2**: A Receber (ícone DollarSign, verde, clicável)
+  - **Card 3**: Remoções (ícone Ambulance, laranja)
+- Formatação de moeda brasileira (Intl.NumberFormat)
+- Card de detalhes de pagamentos pendentes (expansível):
+  - Exibido ao clicar no card "A Receber"
+  - Lista de ocorrências com id, data e valor
+  - Formatação de data em pt-BR
+- Card de informações do perfil com grid 2 colunas
+- Loading states em todos os cards durante fetch
+
+**Melhorias de UX:**
+- Skeleton loaders para feedback visual
+- Hover effects em cards clicáveis
+- Responsividade mobile-first (grid 1 col → 3 cols)
+- Descrições contextuais nos cards
+- Indicadores de tendência para análise de performance
+
+## [0.3.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Layout Base e Navegação (FASE 2)
+
+**Configuração de Navegação** (`src/config/navigation.ts`)
+- Mapeamento completo de menus por perfil (6 perfis)
+- Interface `NavigationItem` com label, href, icon e perfis permitidos
+- Função `getNavigationForProfile(perfil)` - Retorna itens de menu filtrados
+- Função `getProfileLabel(perfil)` - Retorna label formatado do perfil
+- Ícones Lucide React integrados
+- Descrições para cada item de menu
+
+**Menus por Perfil:**
+- **MEDICO**: Dashboard, Agenda, Pacientes
+- **ENFERMEIRO**: Dashboard, Agenda, Pacientes
+- **MOTORISTA**: Ocorrência Ativa (interface tablet)
+- **CHEFE_MEDICOS**: Dashboard, Central de Despacho, Ocorrências, Rastreamento, Ambulâncias, Profissionais, Pacientes, Escala (8 itens)
+- **CHEFE_AMBULANCIAS**: Dashboard, Status Ambulâncias, Atribuição de Ocorrências
+- **CHEFE_ENFERMEIROS**: Dashboard, Status de Equipamentos
+
+**Componente Sidebar** (`src/components/layout/Sidebar.tsx`)
+- Navegação lateral responsiva com design limpo
+- Logo do sistema (SGA) com ícone de ambulância
+- Menu dinâmico baseado no perfil do usuário logado
+- Ícones Lucide React para cada item
+- Indicador visual de item ativo (fundo azul, texto azul)
+- Responsivo mobile:
+  - Botão hamburguer para abrir/fechar
+  - Overlay escuro quando aberto
+  - Animação de slide suave
+  - Fecha automaticamente ao clicar em item
+- Botão de logout estilizado (vermelho)
+- Largura fixa de 256px (16rem) no desktop
+
+**Componente Header** (`src/components/layout/Header.tsx`)
+- Cabeçalho fixo no topo com altura de 64px
+- Título dinâmico mostrando perfil do usuário
+- Mensagem de boas-vindas personalizada
+- Botão de notificações com badge (contador 3)
+- Avatar do usuário:
+  - Iniciais geradas automaticamente do nome
+  - Fundo azul com texto branco
+  - Integrado com @radix-ui/react-avatar
+- Menu dropdown do usuário:
+  - Perfil (link futuro)
+  - Configurações (link futuro)
+  - Sair (logout funcional)
+- Responsivo: esconde informações em telas pequenas
+
+**Layout Dashboard** (`src/app/(dashboard)/layout.tsx`)
+- Layout principal usando Flexbox
+- Estrutura de 3 áreas:
+  1. Sidebar fixa à esquerda (desktop) ou overlay (mobile)
+  2. Header fixo no topo
+  3. Área de conteúdo com scroll independente
+- Height 100vh para ocupar tela inteira
+- Padding responsivo no conteúdo (4 mobile, 6 desktop)
+- Background cinza claro (bg-gray-50)
+- Integração automática com todos os dashboards
+
+**Componentes UI shadcn/ui Adicionados:**
+- `dropdown-menu.tsx` - Menu dropdown com @radix-ui
+- `avatar.tsx` - Avatar com fallback para iniciais
+- `badge.tsx` - Badge para notificações e indicadores
+
+### 🔧 Modificado
+
+**Dashboard do Médico** (`src/app/(dashboard)/medico/page.tsx`)
+- Removido header e botão de logout duplicados
+- Layout simplificado usando apenas conteúdo
+- Removido padding/container (agora vem do layout)
+- Usa automaticamente Sidebar e Header do layout pai
+- Mantém proteção com `ProtectedRoute`
+
+**Página de Login** (`src/app/(auth)/login/page.tsx`)
+- Simplificada lógica de redirecionamento
+- Removido `useEffect` que causava loops
+- Redirecionamento acontece apenas após login bem-sucedido
+- Usa `window.location.href` para navegação confiável
+- Timeout de 100ms para garantir atualização do estado
+
+### 📦 Dependências
+
+**Instaladas:**
+- `lucide-react` - Biblioteca de ícones (já estava instalada)
+- `@radix-ui/react-dropdown-menu` - Primitivo para dropdown menu
+- `@radix-ui/react-avatar` - Primitivo para avatar
+- `@supabase/ssr` - Cliente Supabase para SSR (middleware)
+
+### 🎯 Funcionalidades
+
+**Navegação Responsiva:**
+- Desktop (≥1024px): Sidebar sempre visível, largura fixa 256px
+- Mobile (<1024px): Sidebar escondida, botão hamburguer no header
+- Transições suaves com Tailwind CSS
+- Overlay escuro quando sidebar aberta em mobile
+
+**Sistema de Menus Dinâmicos:**
+- Cada perfil vê apenas seus menus relevantes
+- Indicador visual de página ativa
+- Ícones contextuais para cada funcionalidade
+- Hover states em todos os itens interativos
+
+**UX Melhorada:**
+- Avatar com iniciais personalizadas
+- Badge de notificações (preparado para integração futura)
+- Menu dropdown acessível e intuitivo
+- Logout acessível de 2 lugares (sidebar e dropdown)
+- Loading states em todos os componentes
+
+### 🐛 Correções
+
+**Loop de Redirecionamento Resolvido:**
+- Problema: Login ficava em loop redirecionando para `/login?redirect=%2Fmedico`
+- Causa: `useEffect` disparando múltiplas vezes + middleware bloqueando
+- Solução:
+  1. Removido `useEffect` da página de login
+  2. Redirecionamento apenas após login bem-sucedido
+  3. Middleware temporariamente desabilitado (será reabilitado na FASE 3)
+  4. Uso de `window.location.href` ao invés de `router.push`
+
+### 📊 Status das Fases
+
+**✅ FASE 1 - Autenticação e Controle de Acesso:** Completa
+- Login/Logout funcionando
+- Controle de acesso por perfil
+- Hooks e utilitários criados
+
+**✅ FASE 2 - Layouts e Navegação:** Completa
+- Sidebar responsiva ✅
+- Header com user menu ✅
+- Layout dashboard ✅
+- Navegação por perfil ✅
+- Testado e funcional ✅
+
+**⏭️ Próximo Passo: FASE 3 - Dashboard do Médico**
+- Implementar estatísticas reais
+- Criar lista de ocorrências disponíveis
+- Modal de detalhes de ocorrência
+- Sistema de confirmação de participação
+- Ver `docs/md/PLANO_DE_ACOES.md` → **Prompt 3.1**
+
+### 📝 Notas Técnicas
+
+**Estrutura de Pastas Criada:**
+```
+src/
+├── config/
+│   └── navigation.ts          # Configuração de menus
+├── components/
+│   ├── layout/
+│   │   ├── Sidebar.tsx        # Navegação lateral
+│   │   └── Header.tsx         # Cabeçalho
+│   ├── auth/
+│   │   └── ProtectedRoute.tsx # Já existia
+│   └── ui/
+│       ├── dropdown-menu.tsx  # Novo
+│       ├── avatar.tsx         # Novo
+│       └── badge.tsx          # Novo
+└── app/
+    └── (dashboard)/
+        └── layout.tsx         # Layout principal
+```
+
+**Middleware:**
+- Temporariamente desabilitado para evitar conflitos
+- Será reabilitado com correções na próxima fase
+- Proteção acontece via `ProtectedRoute` no client-side
+
+---
 
 ## [0.2.2] - 2025-10-08
 
