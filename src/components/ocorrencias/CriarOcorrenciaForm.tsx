@@ -188,7 +188,11 @@ export function CriarOcorrenciaForm({
               type="date"
               {...register('data_ocorrencia')}
               min={new Date().toISOString().split('T')[0]}
+              className="cursor-text"
             />
+            <p className="text-xs text-gray-500">
+              Digite ou selecione a data (formato: DD/MM/AAAA)
+            </p>
             {errors.data_ocorrencia && (
               <p className="text-sm text-red-500 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -256,43 +260,6 @@ export function CriarOcorrenciaForm({
             )}
           </div>
 
-          {/* Coordenadas GPS (Grid 2 colunas) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude (opcional)</Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                {...register('latitude')}
-                placeholder="-22.9068"
-              />
-              {errors.latitude && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
-                  {errors.latitude.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude (opcional)</Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                {...register('longitude')}
-                placeholder="-43.1729"
-              />
-              {errors.longitude && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
-                  {errors.longitude.message}
-                </p>
-              )}
-            </div>
-          </div>
-
           {/* Horários (Grid 3 colunas) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -303,7 +270,9 @@ export function CriarOcorrenciaForm({
                 id="horario_saida"
                 type="time"
                 {...register('horario_saida')}
+                className="cursor-text"
               />
+              <p className="text-xs text-gray-500">Formato: HH:MM</p>
               {errors.horario_saida && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
@@ -320,7 +289,9 @@ export function CriarOcorrenciaForm({
                 id="horario_chegada_local"
                 type="time"
                 {...register('horario_chegada_local')}
+                className="cursor-text"
               />
+              <p className="text-xs text-gray-500">Formato: HH:MM</p>
               {errors.horario_chegada_local && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
@@ -340,9 +311,10 @@ export function CriarOcorrenciaForm({
                 id="horario_termino"
                 type="time"
                 {...register('horario_termino')}
+                className="cursor-text"
               />
               <p className="text-xs text-gray-500">
-                Obrigatório para eventos
+                Obrigatório para eventos (Formato: HH:MM)
               </p>
               {errors.horario_termino && (
                 <p className="text-sm text-red-500 flex items-center gap-1">
@@ -370,11 +342,16 @@ export function CriarOcorrenciaForm({
                 </Label>
                 <Input
                   id="valor_medico"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   {...register('valor_medico')}
                   placeholder="0.00"
+                  onKeyPress={(e) => {
+                    // Permitir apenas números, vírgula e ponto
+                    if (!/[0-9.,]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 {errors.valor_medico && (
                   <p className="text-sm text-red-500 flex items-center gap-1">
@@ -392,11 +369,16 @@ export function CriarOcorrenciaForm({
               </Label>
               <Input
                 id="valor_enfermeiro"
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 {...register('valor_enfermeiro')}
                 placeholder="0.00"
+                onKeyPress={(e) => {
+                  // Permitir apenas números, vírgula e ponto
+                  if (!/[0-9.,]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
               />
               {errors.valor_enfermeiro && (
                 <p className="text-sm text-red-500 flex items-center gap-1">

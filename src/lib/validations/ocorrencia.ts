@@ -80,21 +80,6 @@ export const criarOcorrenciaSchema = z
       .optional()
       .nullable(),
 
-    // Coordenadas GPS (opcionais)
-    latitude: z
-      .union([z.string(), z.number()])
-      .pipe(z.coerce.number())
-      .pipe(z.number().min(-90, 'Latitude inválida').max(90, 'Latitude inválida'))
-      .optional()
-      .nullable(),
-
-    longitude: z
-      .union([z.string(), z.number()])
-      .pipe(z.coerce.number())
-      .pipe(z.number().min(-180, 'Longitude inválida').max(180, 'Longitude inválida'))
-      .optional()
-      .nullable(),
-
     // Descrição
     descricao: z
       .string()

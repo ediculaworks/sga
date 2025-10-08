@@ -220,8 +220,6 @@ export const ocorrenciasService = {
         descricao: ocorrenciaData.descricao || null,
         local_ocorrencia: ocorrenciaData.local_ocorrencia,
         endereco_completo: ocorrenciaData.endereco_completo || null,
-        latitude: ocorrenciaData.latitude || null,
-        longitude: ocorrenciaData.longitude || null,
         data_ocorrencia: ocorrenciaData.data_ocorrencia,
         horario_saida: ocorrenciaData.horario_saida,
         horario_chegada_local: ocorrenciaData.horario_chegada_local,
