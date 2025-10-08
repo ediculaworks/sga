@@ -20,8 +20,8 @@ interface Ocorrencia {
   tipo_ambulancia: 'BASICA' | 'EMERGENCIA';
   data_ocorrencia: string;
   horario_saida: string;
-  horario_no_local: string;
-  horario_termino?: string;
+  horario_no_local: string | null;
+  horario_termino?: string | null;
   local_ocorrencia: string;
   status: 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA';
   vagas_disponiveis?: number;
@@ -32,6 +32,13 @@ interface Ocorrencia {
 interface OcorrenciasGroup {
   confirmadas: Ocorrencia[];
   disponiveis: Ocorrencia[];
+}
+
+interface OcorrenciaParticipante {
+  id: number;
+  usuario_id: number | null;
+  funcao: string;
+  confirmado: boolean;
 }
 
 export function useOcorrenciasDisponiveis(
@@ -55,36 +62,40 @@ export function useOcorrenciasDisponiveis(
           tipo_ambulancia,
           data_ocorrencia,
           horario_saida,
-          horario_no_local,
+          horario_chegada_local,
           horario_termino,
           local_ocorrencia,
-          status,
+          status_ocorrencia,
           participantes:ocorrencias_participantes(
             id,
             usuario_id,
-            tipo_profissional,
-            confirmado,
-            vaga_disponivel
+            funcao,
+            confirmado
           )
         `)
-        .in('status', ['EM_ABERTO', 'CONFIRMADA'])
+        .in('status_ocorrencia', ['EM_ABERTO', 'CONFIRMADA'])
         .gte('data_ocorrencia', new Date().toISOString().split('T')[0])
-        .order('data_ocorrencia', { ascending: true })
-        .order('horario_saida', { ascending: true });
+        .order('data_ocorrencia', { ascending: true });
 
       if (error) {
         console.error('Erro ao buscar ocorrências:', error);
         throw error;
       }
 
+      console.log('Ocorrências retornadas:', ocorrencias?.length || 0);
+
       // 2. Buscar escala do profissional (verificar folgas)
-      const { data: escala } = await supabase
+      const { data: escala, error: escalaError } = await supabase
         .from('escala')
         .select('data, disponivel')
         .eq('usuario_id', usuarioId)
         .eq('disponivel', false);
 
-      const diasDeFolga = new Set(escala?.map((e: any) => e.data) || []);
+      if (escalaError) {
+        console.error('Erro ao buscar escala:', escalaError);
+      }
+
+      const diasDeFolga = new Set(escala?.map((e) => e.data) || []);
 
       // 3. Processar ocorrências
       const confirmadas: Ocorrencia[] = [];
@@ -99,8 +110,10 @@ export function useOcorrenciasDisponiveis(
         }
 
         // Verificar se o profissional já está confirmado nesta ocorrência
-        const participacaoProfissional = (ocorrencia.participantes as any[])?.find(
-          (p: any) => p.usuario_id === usuarioId
+        const participantes = (ocorrencia.participantes || []) as unknown as OcorrenciaParticipante[];
+
+        const participacaoProfissional = participantes.find(
+          (p) => p.usuario_id === usuarioId
         );
 
         const jaConfirmado = participacaoProfissional?.confirmado === true;
@@ -114,26 +127,24 @@ export function useOcorrenciasDisponiveis(
             tipo_ambulancia: ocorrencia.tipo_ambulancia,
             data_ocorrencia: ocorrencia.data_ocorrencia,
             horario_saida: ocorrencia.horario_saida,
-            horario_no_local: ocorrencia.horario_no_local,
+            horario_no_local: ocorrencia.horario_chegada_local,
             horario_termino: ocorrencia.horario_termino,
             local_ocorrencia: ocorrencia.local_ocorrencia,
-            status: ocorrencia.status,
+            status: ocorrencia.status_ocorrencia,
             profissional_confirmado: true,
           });
-        } else if (ocorrencia.status === 'EM_ABERTO') {
+        } else if (ocorrencia.status_ocorrencia === 'EM_ABERTO') {
           // Ocorrência em aberto - verificar se há vagas para este perfil
 
           // Contar vagas disponíveis para o tipo de profissional
-          const vagasParaPerfil = (ocorrencia.participantes as any[])?.filter(
-            (p: any) =>
-              p.tipo_profissional === tipoPerfil && p.vaga_disponivel === true
+          const vagasParaPerfil = participantes.filter(
+            (p) => p.funcao === tipoPerfil
           );
 
-          const totalVagasParaPerfil = vagasParaPerfil?.length || 0;
-          const vagasPreenchidas = (ocorrencia.participantes as any[])?.filter(
-            (p: any) =>
-              p.tipo_profissional === tipoPerfil && p.confirmado === true
-          ).length || 0;
+          const totalVagasParaPerfil = vagasParaPerfil.length;
+          const vagasPreenchidas = participantes.filter(
+            (p) => p.funcao === tipoPerfil && p.confirmado === true
+          ).length;
 
           const vagasDisponiveis = totalVagasParaPerfil - vagasPreenchidas;
 
@@ -146,10 +157,10 @@ export function useOcorrenciasDisponiveis(
               tipo_ambulancia: ocorrencia.tipo_ambulancia,
               data_ocorrencia: ocorrencia.data_ocorrencia,
               horario_saida: ocorrencia.horario_saida,
-              horario_no_local: ocorrencia.horario_no_local,
+              horario_no_local: ocorrencia.horario_chegada_local,
               horario_termino: ocorrencia.horario_termino,
               local_ocorrencia: ocorrencia.local_ocorrencia,
-              status: ocorrencia.status,
+              status: ocorrencia.status_ocorrencia,
               vagas_disponiveis: vagasDisponiveis,
               total_vagas: totalVagasParaPerfil,
               profissional_confirmado: false,

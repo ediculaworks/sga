@@ -19,7 +19,9 @@
       "Bash(cat:*)",
       "Bash(npx shadcn@latest add:*)",
       "Bash(timeout 10 bash -c 'until curl -s http://localhost:3004 > /dev/null; do sleep 1; done && echo \"\"Server ready\"\"')",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(start https://supabase.com/dashboard/project/tclvrcgoxqsimbqtnyla/sql/new)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
