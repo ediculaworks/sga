@@ -5,6 +5,185 @@ Todas as mudan�as not�veis neste projeto ser�o documentadas neste arquivo.
 O formato � baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.2.2] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Sistema de Controle de Acesso Baseado em Perfil (FASE 1.2)
+
+**Hook useAuth** (`src/hooks/useAuth.ts`)
+- Função `hasPermission(allowedProfiles)` - Verifica se usuário tem permissão baseado em perfis
+- Propriedade `userProfile` - Retorna tipo de perfil do usuário atual
+- Propriedade `isAuthenticated` - Verifica se usuário está autenticado
+- Integração com authStore do Zustand
+- Exporta todos os estados e funções de autenticação
+
+**Componente ProtectedRoute** (`src/components/auth/ProtectedRoute.tsx`)
+- Aceita array de perfis permitidos via prop `allowedProfiles`
+- Redireciona automaticamente se usuário não tem permissão
+- Mostra loading state enquanto verifica autenticação
+- Suporta `fallbackRoute` customizado
+- Redireciona para dashboard correto do usuário se acesso negado
+
+**Utilitários de Redirecionamento** (`src/lib/utils/redirect.ts`)
+- Função `redirectToDashboard(perfil, router)` - Redireciona para dashboard baseado no perfil
+- Função `getDashboardRoute(perfil)` - Retorna rota do dashboard
+- Função `isRouteAllowedForProfile(perfil, route)` - Verifica se rota é permitida
+- Constante `DASHBOARD_ROUTES` - Mapa de rotas por perfil
+
+### 🔧 Modificado
+
+**Middleware de Autenticação** (`src/middleware.ts`)
+- Adicionada verificação de perfil do usuário
+- Busca `tipo_perfil` na tabela `usuarios` após autenticação
+- Verifica permissão de acesso baseado no mapa `ROUTE_PERMISSIONS`
+- Redireciona automaticamente para dashboard correto se usuário tentar acessar rota não permitida
+- Melhoria na leitura de cookies do Supabase Auth
+- Adicionada constante `ROUTE_PERMISSIONS` mapeando rotas → perfis permitidos
+
+**Dashboard do Médico** (`src/app/(dashboard)/medico/page.tsx`)
+- Envolvido com componente `ProtectedRoute`
+- Atualizado para usar hook `useAuth` ao invés de `useAuthStore` direto
+- Exemplo de implementação de controle de acesso
+
+### 🎯 Funcionalidades
+
+**Controle de Acesso Multinível:**
+1. **Middleware (Server-side)**: Primeira camada de proteção
+   - Verifica sessão do Supabase
+   - Valida perfil do usuário
+   - Redireciona antes de carregar página
+
+2. **ProtectedRoute (Client-side)**: Segunda camada de proteção
+   - Verifica permissões no cliente
+   - Mostra loading states
+   - Redireciona se necessário
+
+3. **Hook useAuth**: Acesso fácil aos dados de autenticação
+   - Função `hasPermission()` para conditional rendering
+   - Estados `isLoading`, `isAuthenticated`
+   - Perfil do usuário acessível
+
+**Mapeamento de Rotas:**
+- `/medico` → Apenas MEDICO
+- `/enfermeiro` → Apenas ENFERMEIRO
+- `/motorista` → Apenas MOTORISTA
+- `/chefe-medicos` → Apenas CHEFE_MEDICOS
+- `/chefe-enfermeiros` → Apenas CHEFE_ENFERMEIROS
+- `/chefe-ambulancias` → Apenas CHEFE_AMBULANCIAS
+
+**Fluxo de Proteção:**
+1. Usuário tenta acessar `/medico`
+2. Middleware verifica se está autenticado
+3. Middleware verifica se perfil = MEDICO
+4. Se não for MEDICO, redireciona para dashboard correto
+5. ProtectedRoute faz verificação adicional no cliente
+6. Renderiza conteúdo apenas se tudo OK
+
+### 📊 Status da FASE 1
+
+**✅ FASE 1.1 - Autenticação Básica:** Completa
+- Login/Logout funcionando
+- Sessão persistida
+- Redirecionamento após login
+
+**✅ FASE 1.2 - Controle de Acesso:** Completa
+- Hook useAuth implementado
+- ProtectedRoute component criado
+- Middleware com verificação de perfil
+- Redirecionamento automático por perfil
+- Testes de acesso por perfil funcionando
+
+**⏭️ Próximo Passo: FASE 2 - Layouts e Navegação**
+- Criar Sidebar responsiva
+- Criar Header com user menu
+- Implementar navegação dinâmica por perfil
+- Ver `PLANO_DE_ACOES.md` → **Prompt 2.1**
+
+---
+
+## [0.2.1] - 2025-10-08
+
+### 🔧 Corrigido
+
+#### Sistema de Autenticação - Correção de Permissões
+
+**Problema Identificado:**
+- Erro 403/401 ao tentar fazer login mesmo após autenticação no Supabase Auth
+- Mensagem: `permission denied for table usuarios`
+- RLS (Row Level Security) não era o problema principal
+
+**Solução Implementada:**
+- Identificado que as **permissões GRANT** da tabela `usuarios` não estavam configuradas
+- Mesmo com RLS desabilitado, as roles `anon` e `authenticated` não tinham permissão para ler a tabela
+- Executado script SQL para conceder permissões:
+  ```sql
+  GRANT SELECT ON usuarios TO anon, authenticated;
+  GRANT INSERT, UPDATE, DELETE ON usuarios TO authenticated;
+  ```
+
+**Scripts SQL Criados** (movidos para `docs/sql/`):
+- `diagnostico-completo-rls.sql` - Diagnóstico do estado do RLS
+- `verificar-permissoes-tabela.sql` - **Script definitivo que resolveu o problema**
+- `DESABILITAR-RLS-TEMPORARIO.sql` - Desabilita RLS (usado para diagnóstico)
+- `SOLUCAO-DEFINITIVA-RLS.sql` - Script completo de políticas RLS
+- `verificar-politicas.sql` - Verifica políticas criadas
+- `fix-rls-final.sql` - Tentativa anterior de correção
+- `corrigir-rls.sql` - Script inicial de correção RLS
+- `diagnostico-usuarios.sql` - Diagnóstico de usuários
+- `setup-usuarios-teste.sql` - Setup de usuários de teste
+- `teste-conexao.sql` - Teste de conexão
+
+**Resultado:**
+- ✅ Login funcionando corretamente
+- ✅ Usuário `medico@teste.com` consegue autenticar
+- ✅ Redirecionamento para dashboard funcionando
+
+### 📁 Organização
+
+**Estrutura de Documentação Criada:**
+```
+docs/
+├── md/          # Arquivos de documentação markdown
+│   ├── TECH_STACK.md
+│   ├── PROJECT_STRUCTURE.md
+│   ├── SETUP_SUPABASE.md
+│   ├── QUICK_START.md
+│   ├── TROUBLESHOOTING.md
+│   ├── PROXIMOS_PASSOS.md
+│   ├── SETUP_DATABASE.md
+│   ├── INTEGRATION_SUMMARY.md
+│   ├── PLANO_DE_ACOES.md
+│   └── SUPABASE_AUTH_SETUP.md
+└── sql/         # Scripts SQL de diagnóstico e correção
+    ├── diagnostico-completo-rls.sql
+    ├── verificar-permissoes-tabela.sql
+    ├── DESABILITAR-RLS-TEMPORARIO.sql
+    ├── SOLUCAO-DEFINITIVA-RLS.sql
+    ├── verificar-politicas.sql
+    ├── fix-rls-final.sql
+    ├── corrigir-rls.sql
+    ├── diagnostico-usuarios.sql
+    ├── setup-usuarios-teste.sql
+    └── teste-conexao.sql
+```
+
+### 📚 Lição Aprendida
+
+**Diferença entre RLS e GRANT:**
+- **RLS (Row Level Security)**: Controla quais LINHAS um usuário pode ver/modificar
+- **GRANT**: Controla se um usuário tem permissão para acessar a TABELA
+- Ambos precisam estar configurados corretamente para o acesso funcionar
+- Neste caso, o problema era **GRANT**, não RLS
+
+**Checklist para futuros problemas de permissão:**
+1. ✅ Verificar se a tabela existe
+2. ✅ Verificar permissões GRANT para as roles (`anon`, `authenticated`)
+3. ✅ Verificar se RLS está habilitado/desabilitado conforme necessário
+4. ✅ Verificar políticas RLS (se habilitado)
+
+---
+
 ## [0.2.0] - 2025-10-08
 
 ### ✅ Adicionado

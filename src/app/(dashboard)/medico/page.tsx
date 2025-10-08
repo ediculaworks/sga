@@ -1,16 +1,17 @@
 'use client';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 /**
  * Dashboard do Médico (Placeholder)
  */
 
-export default function MedicoDashboard() {
-  const { user, logout } = useAuthStore();
+function MedicoDashboardContent() {
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -79,5 +80,13 @@ export default function MedicoDashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function MedicoDashboard() {
+  return (
+    <ProtectedRoute allowedProfiles={['MEDICO']}>
+      <MedicoDashboardContent />
+    </ProtectedRoute>
   );
 }

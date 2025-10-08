@@ -47,14 +47,19 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     }
 
     // 2. Buscar dados completos do usuário na tabela usuarios
+    console.log('[AUTH] Buscando usuário com email:', credentials.email);
+
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
       .select('*')
       .eq('email', credentials.email)
       .single();
 
+    console.log('[AUTH] Resultado da busca:', { userData, userError });
+
     if (userError || !userData) {
       // Se não encontrar o usuário na tabela, fazer logout do Supabase Auth
+      console.error('[AUTH] Usuário não encontrado na tabela usuarios:', userError);
       await supabase.auth.signOut();
       return {
         user: null,

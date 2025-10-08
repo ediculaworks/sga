@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -18,37 +18,11 @@ import { toast } from 'sonner';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, user } = useAuthStore();
+  const { login, isLoading } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-
-  // Redirecionar se já estiver logado
-  useEffect(() => {
-    if (user) {
-      redirectToDashboard();
-    }
-  }, [user]);
-
-  /**
-   * Redireciona para o dashboard apropriado baseado no perfil do usuário
-   */
-  const redirectToDashboard = () => {
-    if (!user) return;
-
-    const dashboardRoutes: Record<string, string> = {
-      MEDICO: '/medico',
-      ENFERMEIRO: '/enfermeiro',
-      MOTORISTA: '/motorista',
-      CHEFE_MEDICOS: '/chefe-medicos',
-      CHEFE_ENFERMEIROS: '/chefe-enfermeiros',
-      CHEFE_AMBULANCIAS: '/chefe-ambulancias',
-    };
-
-    const route = dashboardRoutes[user.tipo_perfil] || '/';
-    router.push(route);
-  };
 
   /**
    * Valida os campos do formulário
@@ -93,7 +67,27 @@ export default function LoginPage() {
 
       if (result.success) {
         toast.success('Login realizado com sucesso!');
-        redirectToDashboard();
+
+        // Buscar o usuário do store para pegar o perfil
+        const { user } = useAuthStore.getState();
+
+        if (user) {
+          const dashboardRoutes: Record<string, string> = {
+            MEDICO: '/medico',
+            ENFERMEIRO: '/enfermeiro',
+            MOTORISTA: '/motorista',
+            CHEFE_MEDICOS: '/chefe-medicos',
+            CHEFE_ENFERMEIROS: '/chefe-enfermeiros',
+            CHEFE_AMBULANCIAS: '/chefe-ambulancias',
+          };
+
+          const route = dashboardRoutes[user.tipo_perfil] || '/';
+
+          // Usar setTimeout para garantir que o estado foi atualizado
+          setTimeout(() => {
+            window.location.href = route;
+          }, 100);
+        }
       } else {
         toast.error(result.error || 'Erro ao fazer login');
       }
