@@ -5,6 +5,139 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.14.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 7.2 - Central de Despacho (Criação de Ocorrências)
+
+**Página de Central de Despacho** (`src/app/(dashboard)/chefe-medicos/central-despacho/page.tsx`)
+- Página exclusiva do Chefe dos Médicos para criar novas ocorrências
+- Proteção de rota com `ProtectedRoute` para perfil `CHEFE_MEDICOS`
+- Instruções claras sobre o funcionamento da criação de vagas
+- Feedback visual com toast de sucesso/erro
+- Redirecionamento automático para dashboard após criação
+
+**Componente CriarOcorrenciaForm** (`src/components/ocorrencias/CriarOcorrenciaForm.tsx`)
+- Formulário completo com React Hook Form + Zod Resolver
+- **Seção 1: Tipo de Ambulância e Equipe**
+  - Select de tipo (BASICA | EMERGENCIA)
+  - Info card mostrando equipe mínima criada automaticamente
+  - Input para enfermeiros adicionais (0-5)
+- **Seção 2: Detalhes da Ocorrência**
+  - Select de tipo de trabalho (EVENTO | EMERGENCIA | DOMICILIAR | TRANSFERENCIA)
+  - Date picker para data da ocorrência
+  - Textarea para descrição (opcional)
+- **Seção 3: Local e Horários**
+  - Input para local da ocorrência
+  - Input para endereço completo (opcional)
+  - Inputs para coordenadas GPS (latitude/longitude) opcionais
+  - Grid de 3 inputs de horários: saída, chegada no local, término
+  - Horário de término obrigatório apenas para EVENTO
+- **Seção 4: Informações de Pagamento**
+  - Input valor médico (obrigatório apenas para EMERGENCIA)
+  - Input valor enfermeiro (sempre obrigatório)
+  - Date picker para data de pagamento
+- Estados de loading durante submissão
+- Validação completa com feedback visual de erros
+- Layout responsivo (mobile-first)
+
+**Schema de Validação Zod** (`src/lib/validations/ocorrencia.ts`)
+- Schema `criarOcorrenciaSchema` com 15 campos
+- **Validações implementadas:**
+  - Tipo de ambulância e trabalho (enums)
+  - Quantidade de enfermeiros adicionais (0-5)
+  - Data não pode ser no passado
+  - Horários no formato HH:MM
+  - Horário chegada > horário saída
+  - Horário término > horário chegada (se fornecido)
+  - Horário término obrigatório para EVENTO
+  - Local com min 3 chars, max 255
+  - Endereço max 500 chars
+  - Descrição max 1000 chars
+  - Coordenadas GPS dentro de ranges válidos
+  - Valores de pagamento não negativos
+  - Valor médico obrigatório para EMERGENCIA
+- Type inference automática: `CriarOcorrenciaFormData`
+
+**Serviço de Ocorrências Estendido** (`src/lib/services/ocorrencias.ts`)
+- **Novo método: `createComVagas()`**
+  - Cria ocorrência + vagas de participantes em uma transação
+  - Gera número de ocorrência automaticamente
+  - **Regras de criação de vagas:**
+    * BASICA → 1 vaga de enfermeiro
+    * EMERGENCIA → 1 vaga de médico + 1 vaga de enfermeiro
+    * Enfermeiros adicionais conforme especificado
+  - Todas as vagas criadas com:
+    * `usuario_id = null` (vaga em aberto)
+    * `confirmado = false`
+    * Valor de pagamento e data prevista
+    * `pago = false`
+  - Rollback automático se criação de vagas falhar
+  - Retorna ocorrência criada + total de vagas criadas
+
+**Funcionalidades:**
+- Geração automática de número de ocorrência (formato: `OCYYYYMM0001`)
+- Status inicial sempre `EM_ABERTO`
+- Criação de vagas baseada no tipo de ambulância
+- Validação de horários em cascata
+- Campos condicionais (horário término, valor médico)
+- Feedback visual em tempo real
+
+### 📝 Arquivos Criados
+- `src/lib/validations/ocorrencia.ts` - Schema Zod (159 linhas)
+- `src/components/ocorrencias/CriarOcorrenciaForm.tsx` - Formulário (509 linhas)
+- `src/app/(dashboard)/chefe-medicos/central-despacho/page.tsx` - Página (96 linhas)
+
+### 📝 Arquivos Modificados
+- `src/lib/services/ocorrencias.ts` - Adicionado método `createComVagas()` (+119 linhas)
+
+### 🎯 Fluxo Completo Implementado
+
+1. **Chefe dos Médicos acessa** `/chefe-medicos/central-despacho`
+2. **Seleciona tipo de ambulância:**
+   - BASICA → Info mostra "1 vaga de enfermeiro"
+   - EMERGENCIA → Info mostra "1 vaga de médico + 1 vaga de enfermeiro"
+3. **Pode adicionar enfermeiros extras** (0-5)
+4. **Preenche todos os campos obrigatórios**
+5. **Validações Zod executam em tempo real**
+6. **Ao submeter:**
+   - Gera número único (ex: OC20251000001)
+   - Cria ocorrência no banco
+   - Cria vagas de participantes automaticamente
+   - Todas as vagas com `usuario_id = null` (em aberto)
+7. **Toast de sucesso mostra:**
+   - Número da ocorrência
+   - Quantidade de vagas criadas
+8. **Redireciona para dashboard** após 1.5s
+9. **Médicos e enfermeiros podem se inscrever** nas vagas em aberto
+
+### ⚠️ Regras de Negócio Aplicadas
+
+✅ **Tipo de ambulância define equipe mínima**
+✅ **Valores de pagamento por função**
+✅ **Horário término obrigatório apenas para eventos**
+✅ **Data não pode ser no passado**
+✅ **Horários validados em cascata (saída < chegada < término)**
+✅ **Status inicial sempre EM_ABERTO**
+✅ **Vagas criadas automaticamente com valores de pagamento**
+
+### 🧪 Testes
+- ✅ ESLint sem erros
+- ✅ Formulário valida todos os campos corretamente
+- ✅ Criação de vagas automática funciona
+- ✅ Redirecionamento após criação
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 8.1 - Banco de Dados de Ocorrências**
+- Tabela com todas as ocorrências
+- Filtros avançados (data, tipo, status)
+- Ordenação (ativas primeiro)
+- Ver detalhes de ocorrências
+
+---
+
 ## [0.13.2] - 2025-10-08
 
 ### 🐛 Corrigido

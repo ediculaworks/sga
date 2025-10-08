@@ -195,6 +195,126 @@ export const ocorrenciasService = {
   },
 
   /**
+   * Cria uma nova ocorrência com vagas automáticas
+   * Usado pela Central de Despacho (Chefe dos Médicos)
+   *
+   * Regras de vagas:
+   * - BASICA: 1 enfermeiro
+   * - EMERGENCIA: 1 médico + 1 enfermeiro
+   * - Enfermeiros adicionais conforme especificado
+   */
+  async createComVagas(
+    ocorrenciaData: any,
+    quantidade_enfermeiros_adicionais: number = 0,
+    criado_por: number
+  ) {
+    try {
+      // 1. Gerar número de ocorrência
+      const numeroOcorrencia = await this.gerarNumeroOcorrencia();
+
+      // 2. Preparar dados da ocorrência
+      const ocorrenciaParaInserir = {
+        numero_ocorrencia: numeroOcorrencia,
+        tipo_ambulancia: ocorrenciaData.tipo_ambulancia,
+        tipo_trabalho: ocorrenciaData.tipo_trabalho,
+        status_ocorrencia: StatusOcorrencia.EM_ABERTO,
+        descricao: ocorrenciaData.descricao || null,
+        local_ocorrencia: ocorrenciaData.local_ocorrencia,
+        endereco_completo: ocorrenciaData.endereco_completo || null,
+        latitude: ocorrenciaData.latitude || null,
+        longitude: ocorrenciaData.longitude || null,
+        data_ocorrencia: ocorrenciaData.data_ocorrencia,
+        horario_saida: ocorrenciaData.horario_saida,
+        horario_chegada_local: ocorrenciaData.horario_chegada_local,
+        horario_termino: ocorrenciaData.horario_termino || null,
+        criado_por,
+      };
+
+      // 3. Inserir ocorrência
+      const { data: ocorrencia, error: ocorrenciaError } = await supabase
+        .from('ocorrencias')
+        .insert([ocorrenciaParaInserir])
+        .select()
+        .single();
+
+      if (ocorrenciaError) {
+        console.error('Erro ao criar ocorrência:', ocorrenciaError);
+        throw new Error('Erro ao criar ocorrência');
+      }
+
+      // 4. Criar vagas de participantes baseado no tipo de ambulância
+      const vagas: any[] = [];
+
+      if (ocorrenciaData.tipo_ambulancia === TipoAmbulancia.EMERGENCIA) {
+        // Ambulância de emergência: 1 médico + 1 enfermeiro (mínimo)
+        vagas.push({
+          ocorrencia_id: ocorrencia.id,
+          funcao: 'MEDICO',
+          confirmado: false,
+          usuario_id: null,
+          valor_pagamento: ocorrenciaData.valor_medico || null,
+          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          pago: false,
+        });
+
+        vagas.push({
+          ocorrencia_id: ocorrencia.id,
+          funcao: 'ENFERMEIRO',
+          confirmado: false,
+          usuario_id: null,
+          valor_pagamento: ocorrenciaData.valor_enfermeiro || null,
+          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          pago: false,
+        });
+      } else {
+        // Ambulância básica: apenas 1 enfermeiro (mínimo)
+        vagas.push({
+          ocorrencia_id: ocorrencia.id,
+          funcao: 'ENFERMEIRO',
+          confirmado: false,
+          usuario_id: null,
+          valor_pagamento: ocorrenciaData.valor_enfermeiro || null,
+          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          pago: false,
+        });
+      }
+
+      // 5. Adicionar enfermeiros adicionais se especificado
+      for (let i = 0; i < quantidade_enfermeiros_adicionais; i++) {
+        vagas.push({
+          ocorrencia_id: ocorrencia.id,
+          funcao: 'ENFERMEIRO',
+          confirmado: false,
+          usuario_id: null,
+          valor_pagamento: ocorrenciaData.valor_enfermeiro || null,
+          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          pago: false,
+        });
+      }
+
+      // 6. Inserir todas as vagas
+      const { error: vagasError } = await supabase
+        .from('ocorrencias_participantes')
+        .insert(vagas);
+
+      if (vagasError) {
+        console.error('Erro ao criar vagas:', vagasError);
+        // Tentar deletar a ocorrência criada
+        await supabase.from('ocorrencias').delete().eq('id', ocorrencia.id);
+        throw new Error('Erro ao criar vagas da ocorrência');
+      }
+
+      return {
+        ocorrencia,
+        vagas_criadas: vagas.length,
+      };
+    } catch (error: any) {
+      console.error('Erro em createComVagas:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Atualiza uma ocorrência
    */
   async update(id: number, ocorrencia: Partial<OcorrenciaFormData>) {
