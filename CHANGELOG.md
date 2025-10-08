@@ -5,6 +5,164 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.12.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 6.2 - Sistema de Notas sobre Pacientes (Enfermeiro)
+
+**Componente AdicionarNotaModal** (`src/components/enfermeiro/AdicionarNotaModal.tsx`)
+- Modal dedicado para enfermeiros adicionarem notas sobre pacientes
+- **Interface:**
+  - Exibe nome do paciente em destaque
+  - Textarea amplo (8 linhas) para nota de enfermagem
+  - Placeholder informativo com orientações
+  - Caracteres de ajuda sobre o que registrar
+  - Botões "Cancelar" e "Salvar Nota"
+- **Funcionalidades:**
+  - Validação: não permite salvar nota vazia
+  - Loading state durante salvamento
+  - Feedback visual com spinner animado
+  - Auto-limpeza ao fechar modal
+  - Integração com função de callback para salvar
+- **Design:**
+  - Card azul para informações do paciente
+  - Botão verde para salvar (cor de sucesso)
+  - Ícone FileText para contexto visual
+  - Responsivo e acessível
+
+**Componente UI Textarea** (`src/components/ui/textarea.tsx`)
+- Componente base do shadcn/ui para textarea
+- Estilos consistentes com design system
+- Suporta disabled, placeholder e ref forwarding
+- Classes Tailwind personalizáveis via className
+- Estados de foco e disabled bem definidos
+
+**OcorrenciaDetalhesModal Atualizado** (`src/components/ocorrencias/OcorrenciaDetalhesModal.tsx`)
+- **Nova Seção: Pacientes Atendidos (FASE 6.2)**
+  - Visível apenas para ENFERMEIRO em ocorrências EM_ANDAMENTO
+  - Query automática busca pacientes com atendimentos registrados
+  - Card azul claro com borda azul para destaque
+  - Lista de pacientes com informações:
+    * Nome completo do paciente
+    * Queixa principal (se registrada)
+    * Idade e sexo (se cadastrados)
+    * Botão "Adicionar Nota" por paciente
+  - Hover effects nos cards de pacientes
+  - Botão estilizado com ícone FileText
+- **Nova Query:**
+  - `pacientes-ocorrencia` - Busca atendimentos da ocorrência
+  - Join com tabela pacientes
+  - Habilitada apenas para enfermeiro em ocorrência EM_ANDAMENTO
+  - Cache inteligente via React Query
+- **Nova Função: handleSalvarNota**
+  - Busca ID do enfermeiro logado via sessão
+  - Insere nota na tabela notas_enfermeiro_pacientes
+  - Campos: atendimento_id, enfermeiro_id, nota, created_at
+  - Revalida lista de pacientes após salvar
+  - Tratamento de erros robusto
+- **Nova Função: handleAdicionarNota**
+  - Abre modal AdicionarNotaModal
+  - Passa atendimentoId e nome do paciente
+  - Gerencia estado do modal
+- **Estados Adicionais:**
+  - `isNotaModalOpen` - Controla abertura do modal de nota
+  - `pacienteSelecionado` - Armazena dados do paciente selecionado
+- **Imports Adicionados:**
+  - useState do React
+  - Ícones User e FileText do lucide-react
+  - AdicionarNotaModal component
+
+**ProntuarioModal - Integração Completa**
+- Seção "Notas de Enfermagem" já implementada (desde v0.10.0)
+- Query `notas-enfermeiro` busca todas as notas do atendimento
+- Join com tabela usuarios para nome do enfermeiro
+- Exibição cronológica (mais recente primeiro)
+- Card com borda lateral azul para cada nota
+- Mostra: nome do enfermeiro, data/hora, conteúdo da nota
+- Formatação preservada com whitespace-pre-wrap
+- Exibe apenas se houver notas cadastradas
+
+### 🎯 Funcionalidades
+
+**Fluxo Completo Implementado:**
+
+1. **Durante Ocorrência EM_ANDAMENTO:**
+   - Enfermeiro acessa detalhes da ocorrência
+   - Sistema lista automaticamente pacientes atendidos
+   - Enfermeiro clica em "Adicionar Nota" para um paciente
+
+2. **Adicionar Nota:**
+   - Modal abre com nome do paciente
+   - Enfermeiro digita observações de enfermagem
+   - Salva nota vinculada ao atendimento
+   - Sistema registra data/hora e ID do enfermeiro
+
+3. **Visualizar Notas:**
+   - Médicos e chefes acessam página de Pacientes
+   - Clicam em "Ver Histórico" do paciente
+   - Abrem prontuário de um atendimento específico
+   - Veem seção "Notas de Enfermagem" com todas as notas
+   - Cada nota mostra autor, data/hora e conteúdo
+
+**Validações e Segurança:**
+- Apenas ENFERMEIRO pode adicionar notas
+- Notas só podem ser adicionadas em ocorrências EM_ANDAMENTO
+- Sistema registra automaticamente autor e timestamp
+- Não permite notas vazias
+- Validação de usuário autenticado antes de salvar
+
+**Performance:**
+- Query de pacientes habilitada condicionalmente
+- Cache de 5 minutos para reduzir requisições
+- Revalidação automática após salvar nota
+- Loading states em todas as operações assíncronas
+
+### 📝 Notas Técnicas
+
+**Schema do Banco de Dados:**
+```sql
+-- Tabela já existente no schema (supabase/schema.sql:344-351)
+CREATE TABLE notas_enfermeiro_pacientes (
+  id SERIAL PRIMARY KEY,
+  atendimento_id INTEGER NOT NULL REFERENCES atendimentos(id) ON DELETE CASCADE,
+  enfermeiro_id INTEGER NOT NULL REFERENCES usuarios(id),
+  nota TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_notas_atendimento ON notas_enfermeiro_pacientes(atendimento_id);
+CREATE INDEX idx_notas_enfermeiro ON notas_enfermeiro_pacientes(enfermeiro_id);
+```
+
+**Tipos TypeScript:**
+```typescript
+interface PacienteAtendido {
+  id: number; // atendimento_id
+  nome_completo: string;
+  idade?: number;
+  sexo?: string;
+  queixa_principal?: string;
+}
+```
+
+**Arquivos Criados:**
+- `src/components/enfermeiro/AdicionarNotaModal.tsx` - Modal de adicionar nota (119 linhas)
+- `src/components/ui/textarea.tsx` - Componente UI base (20 linhas)
+
+**Arquivos Modificados:**
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx` - Adicionada seção de pacientes e lógica de notas
+- Nenhuma modificação no ProntuarioModal (já tinha suporte desde v0.10.0)
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 7.1 - Dashboard do Chefe dos Médicos**
+- Estatísticas gerais do sistema
+- Avisos e alertas
+- Botão "Criar Nova Ocorrência"
+
+---
+
 ## [0.11.0] - 2025-10-08
 
 ### ✅ Adicionado

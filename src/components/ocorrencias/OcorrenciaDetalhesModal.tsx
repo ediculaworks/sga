@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -23,8 +24,11 @@ import {
   Briefcase,
   Users,
   X,
+  FileText,
+  User,
 } from 'lucide-react';
 import { TipoPerfil } from '@/types';
+import { AdicionarNotaModal } from '@/components/enfermeiro/AdicionarNotaModal';
 
 interface OcorrenciaDetalhesModalProps {
   ocorrenciaId: number | null;
@@ -63,6 +67,14 @@ interface Participante {
   };
 }
 
+interface PacienteAtendido {
+  id: number;
+  nome_completo: string;
+  idade?: number;
+  sexo?: string;
+  queixa_principal?: string;
+}
+
 export function OcorrenciaDetalhesModal({
   ocorrenciaId,
   isOpen,
@@ -71,6 +83,13 @@ export function OcorrenciaDetalhesModal({
   onConfirmarParticipacao,
   isConfirmando = false,
 }: OcorrenciaDetalhesModalProps) {
+  // Estados para modal de adicionar nota
+  const [isNotaModalOpen, setIsNotaModalOpen] = useState(false);
+  const [pacienteSelecionado, setPacienteSelecionado] = useState<{
+    atendimentoId: number;
+    nome: string;
+  } | null>(null);
+
   const { data: ocorrencia, isLoading } = useQuery({
     queryKey: ['ocorrencia-detalhes', ocorrenciaId],
     queryFn: async (): Promise<OcorrenciaDetalhes | null> => {
@@ -115,6 +134,93 @@ export function OcorrenciaDetalhesModal({
     },
     enabled: isOpen && !!ocorrenciaId,
   });
+
+  // Query para buscar pacientes atendidos na ocorrência (apenas para enfermeiro em ocorrência EM_ANDAMENTO)
+  const { data: pacientes, refetch: refetchPacientes } = useQuery({
+    queryKey: ['pacientes-ocorrencia', ocorrenciaId],
+    queryFn: async (): Promise<PacienteAtendido[]> => {
+      if (!ocorrenciaId) return [];
+
+      const { data, error } = await supabase
+        .from('atendimentos')
+        .select(
+          `
+          id,
+          queixa_principal,
+          pacientes (
+            nome_completo,
+            idade,
+            sexo
+          )
+        `
+        )
+        .eq('ocorrencia_id', ocorrenciaId);
+
+      if (error) {
+        console.error('Erro ao buscar pacientes:', error);
+        return [];
+      }
+
+      return (data || []).map((atendimento: any) => ({
+        id: atendimento.id,
+        nome_completo: atendimento.pacientes?.nome_completo || 'Paciente sem nome',
+        idade: atendimento.pacientes?.idade,
+        sexo: atendimento.pacientes?.sexo,
+        queixa_principal: atendimento.queixa_principal,
+      }));
+    },
+    enabled:
+      isOpen &&
+      !!ocorrenciaId &&
+      perfil === TipoPerfil.ENFERMEIRO &&
+      ocorrencia?.status_ocorrencia === 'EM_ANDAMENTO',
+  });
+
+  // Função para salvar nota de enfermeiro
+  const handleSalvarNota = async (atendimentoId: number, nota: string) => {
+    try {
+      // Buscar ID do enfermeiro logado
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const { data: usuario, error: userError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+
+      if (userError || !usuario) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      // Inserir nota
+      const { error } = await supabase.from('notas_enfermeiro_pacientes').insert({
+        atendimento_id: atendimentoId,
+        enfermeiro_id: usuario.id,
+        nota: nota,
+      });
+
+      if (error) throw error;
+
+      // Fechar modal e recarregar lista
+      setIsNotaModalOpen(false);
+      setPacienteSelecionado(null);
+      await refetchPacientes();
+    } catch (error) {
+      console.error('Erro ao salvar nota:', error);
+      throw error;
+    }
+  };
+
+  // Função para abrir modal de adicionar nota
+  const handleAdicionarNota = (atendimentoId: number, nome: string) => {
+    setPacienteSelecionado({ atendimentoId, nome });
+    setIsNotaModalOpen(true);
+  };
 
   if (!isOpen) return null;
 
@@ -324,6 +430,53 @@ export function OcorrenciaDetalhesModal({
                 </div>
               </div>
             )}
+
+            {/* Lista de Pacientes Atendidos - FASE 6.2 - Apenas para ENFERMEIRO em ocorrência EM_ANDAMENTO */}
+            {perfil === TipoPerfil.ENFERMEIRO &&
+              ocorrencia.status_ocorrencia === 'EM_ANDAMENTO' &&
+              pacientes &&
+              pacientes.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    Pacientes Atendidos nesta Ocorrência
+                  </p>
+                  <div className="space-y-2">
+                    {pacientes.map((paciente) => (
+                      <div
+                        key={paciente.id}
+                        className="flex items-center justify-between p-3 bg-white border rounded-lg hover:border-blue-300 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {paciente.nome_completo}
+                          </p>
+                          {paciente.queixa_principal && (
+                            <p className="text-xs text-gray-600 mt-1">
+                              Queixa: {paciente.queixa_principal}
+                            </p>
+                          )}
+                          <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                            {paciente.idade && <span>Idade: {paciente.idade} anos</span>}
+                            {paciente.sexo && <span>Sexo: {paciente.sexo}</span>}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            handleAdicionarNota(paciente.id, paciente.nome_completo)
+                          }
+                          className="ml-4 border-blue-300 text-blue-700 hover:bg-blue-100"
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          Adicionar Nota
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-600">
@@ -354,6 +507,20 @@ export function OcorrenciaDetalhesModal({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Modal de Adicionar Nota - FASE 6.2 */}
+      {pacienteSelecionado && (
+        <AdicionarNotaModal
+          atendimentoId={pacienteSelecionado.atendimentoId}
+          pacienteNome={pacienteSelecionado.nome}
+          isOpen={isNotaModalOpen}
+          onClose={() => {
+            setIsNotaModalOpen(false);
+            setPacienteSelecionado(null);
+          }}
+          onSalvarNota={handleSalvarNota}
+        />
+      )}
     </Dialog>
   );
 }
