@@ -38,7 +38,7 @@ interface CalendarEvent {
   };
 }
 
-export default function AgendaMedicoPage() {
+export default function AgendaEnfermeiroPage() {
   const { user } = useAuthStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<any>(Views.MONTH);
@@ -47,9 +47,9 @@ export default function AgendaMedicoPage() {
   >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Buscar ocorrências do médico
+  // Buscar ocorrências do enfermeiro
   const { data: ocorrencias, isLoading } = useQuery({
-    queryKey: ['agenda-medico', user?.id, selectedDate],
+    queryKey: ['agenda-enfermeiro', user?.id, selectedDate],
     queryFn: async () => {
       if (!user?.id) return [];
 
@@ -258,7 +258,7 @@ export default function AgendaMedicoPage() {
           ocorrenciaId={selectedOcorrenciaId}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          perfil="MEDICO"
+          perfil="ENFERMEIRO"
         />
       )}
     </div>

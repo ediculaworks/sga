@@ -5,6 +5,48 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.8.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### Página de Agenda do Enfermeiro
+
+**Componente AgendaEnfermeiroPage** (`src/app/(dashboard)/enfermeiro/agenda/page.tsx`)
+- Calendário completo com React Big Calendar (reutilizado do médico)
+- Visualização de todas as ocorrências confirmadas do enfermeiro
+- **4 Visualizações disponíveis:**
+  - Mês (padrão)
+  - Semana
+  - Dia
+  - Agenda (lista)
+- **Funcionalidades:**
+  - Navegação entre períodos funcionando corretamente
+  - Botão "Hoje" funcional
+  - Eventos clicáveis que abrem modal de detalhes
+  - Cores por status da ocorrência
+  - Legenda de cores explicativa
+  - Responsivo
+- **Query otimizada:**
+  - Busca apenas ocorrências confirmadas pelo enfermeiro
+  - Join com tabela ocorrencias
+  - Cache de 5 minutos (React Query)
+- **Integração:**
+  - Modal de detalhes com perfil ENFERMEIRO
+  - Mesma navegação e UX do médico
+
+### 🐛 Corrigido
+
+**Calendário do Médico e Enfermeiro**
+- Corrigido erro "moment is not a function" - trocado `momentLocalizer` por `dateFnsLocalizer`
+- Adicionado estado `currentView` para controlar views (mês, semana, dia, agenda)
+- Adicionadas props `view` e `onView` para o componente Calendar
+- Botão "Hoje" agora funciona corretamente
+
+**Sidebar - Highlight de navegação**
+- Corrigida lógica de highlight para dar prioridade ao item mais específico
+- Dashboard não fica mais ativo quando você está em `/medico/agenda` ou `/enfermeiro/agenda`
+- Lógica atualizada em `src/components/layout/Sidebar.tsx:104-110`
+
 ## [0.7.0] - 2025-10-08
 
 ### ✅ Adicionado

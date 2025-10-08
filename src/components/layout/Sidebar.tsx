@@ -100,7 +100,14 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="space-y-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              // Exact match ou se o pathname começa com o href (mas não é um prefixo de outro item)
+              const isActive = pathname === item.href ||
+                (pathname.startsWith(item.href + '/') &&
+                 !navigationItems.some(otherItem =>
+                   otherItem.href !== item.href &&
+                   pathname.startsWith(otherItem.href) &&
+                   otherItem.href.length > item.href.length
+                 ));
 
               return (
                 <Link
