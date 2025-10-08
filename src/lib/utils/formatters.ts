@@ -200,3 +200,48 @@ export function capitalizarPalavras(texto: string): string {
     .map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1))
     .join(' ');
 }
+
+/**
+ * Alias para formatarMoeda (compatibilidade)
+ */
+export const formatCurrency = formatarMoeda;
+
+/**
+ * Formata labels de enums do sistema
+ */
+export function formatLabel(value: string): string {
+  const labels: Record<string, string> = {
+    // Tipo de Trabalho
+    EVENTO: 'Evento',
+    EMERGENCIA: 'Emergência',
+    DOMICILIAR: 'Domiciliar',
+    TRANSFERENCIA: 'Transferência',
+
+    // Tipo de Ambulância
+    BASICA: 'Básica',
+
+    // Perfis
+    MEDICO: 'Médico',
+    ENFERMEIRO: 'Enfermeiro',
+    MOTORISTA: 'Motorista',
+    CHEFE_MEDICOS: 'Chefe Médicos',
+    CHEFE_ENFERMEIROS: 'Chefe Enfermeiros',
+    CHEFE_AMBULANCIAS: 'Chefe Ambulâncias',
+
+    // Status
+    EM_ABERTO: 'Em Aberto',
+    CONFIRMADA: 'Confirmada',
+    EM_ANDAMENTO: 'Em Andamento',
+    CONCLUIDA: 'Concluída',
+  };
+
+  return labels[value] || value;
+}
+
+/**
+ * Formata sexo (M/F) para legível
+ */
+export function formatSexo(sexo: string | null | undefined): string {
+  if (!sexo) return '-';
+  return sexo === 'M' ? 'Masculino' : sexo === 'F' ? 'Feminino' : '-';
+}

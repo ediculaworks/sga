@@ -21,6 +21,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { TipoPerfil } from '@/types';
 
 /**
  * Dashboard do Enfermeiro
@@ -310,7 +311,7 @@ function EnfermeiroDashboardContent() {
 
 export default function EnfermeiroDashboard() {
   return (
-    <ProtectedRoute allowedProfiles={['ENFERMEIRO']}>
+    <ProtectedRoute allowedProfiles={[TipoPerfil.ENFERMEIRO]}>
       <EnfermeiroDashboardContent />
     </ProtectedRoute>
   );

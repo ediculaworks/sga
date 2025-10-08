@@ -12,6 +12,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { ocorrenciasService } from '@/lib/services/ocorrencias';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/lib/utils/formatters';
 import {
   Activity,
   DollarSign,
@@ -20,7 +21,8 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { TipoPerfil } from '@/types';
 
 /**
  * Dashboard do Médico
@@ -41,20 +43,20 @@ function MedicoDashboardContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmando, setIsConfirmando] = useState(false);
 
-  // Handler para ver detalhes da ocorrência
-  const handleVerDetalhes = (ocorrenciaId: number) => {
+  // Handler para ver detalhes da ocorrência (memoizado)
+  const handleVerDetalhes = useCallback((ocorrenciaId: number) => {
     setModalOcorrenciaId(ocorrenciaId);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  // Handler para fechar modal
-  const handleCloseModal = () => {
+  // Handler para fechar modal (memoizado)
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setModalOcorrenciaId(null);
-  };
+  }, []);
 
-  // Handler para confirmar participação
-  const handleConfirmarParticipacao = async (ocorrenciaId: number) => {
+  // Handler para confirmar participação (memoizado)
+  const handleConfirmarParticipacao = useCallback(async (ocorrenciaId: number) => {
     if (!user?.id) {
       toast.error('Usuário não identificado');
       return;
@@ -83,15 +85,7 @@ function MedicoDashboardContent() {
     } finally {
       setIsConfirmando(false);
     }
-  };
-
-  // Formatar valor em reais
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
+  }, [user?.id, queryClient, handleCloseModal]);
 
   // Labels dos períodos
   const periodoLabels = {
@@ -309,7 +303,7 @@ function MedicoDashboardContent() {
 
 export default function MedicoDashboard() {
   return (
-    <ProtectedRoute allowedProfiles={['MEDICO']}>
+    <ProtectedRoute allowedProfiles={[TipoPerfil.MEDICO]}>
       <MedicoDashboardContent />
     </ProtectedRoute>
   );

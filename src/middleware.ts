@@ -23,12 +23,12 @@ import { TipoPerfil } from '@/types';
  * Mapa de rotas para perfis permitidos
  */
 const ROUTE_PERMISSIONS: Record<string, TipoPerfil[]> = {
-  '/medico': ['MEDICO'],
-  '/enfermeiro': ['ENFERMEIRO'],
-  '/motorista': ['MOTORISTA'],
-  '/chefe-medicos': ['CHEFE_MEDICOS'],
-  '/chefe-enfermeiros': ['CHEFE_ENFERMEIROS'],
-  '/chefe-ambulancias': ['CHEFE_AMBULANCIAS'],
+  '/medico': [TipoPerfil.MEDICO],
+  '/enfermeiro': [TipoPerfil.ENFERMEIRO],
+  '/motorista': [TipoPerfil.MOTORISTA],
+  '/chefe-medicos': [TipoPerfil.CHEFE_MEDICOS],
+  '/chefe-enfermeiros': [TipoPerfil.CHEFE_ENFERMEIROS],
+  '/chefe-ambulancias': [TipoPerfil.CHEFE_AMBULANCIAS],
 };
 
 /**
@@ -36,12 +36,12 @@ const ROUTE_PERMISSIONS: Record<string, TipoPerfil[]> = {
  */
 function getDashboardRoute(perfil: TipoPerfil): string {
   const routes: Record<TipoPerfil, string> = {
-    MEDICO: '/medico',
-    ENFERMEIRO: '/enfermeiro',
-    MOTORISTA: '/motorista',
-    CHEFE_MEDICOS: '/chefe-medicos',
-    CHEFE_ENFERMEIROS: '/chefe-enfermeiros',
-    CHEFE_AMBULANCIAS: '/chefe-ambulancias',
+    [TipoPerfil.MEDICO]: '/medico',
+    [TipoPerfil.ENFERMEIRO]: '/enfermeiro',
+    [TipoPerfil.MOTORISTA]: '/motorista',
+    [TipoPerfil.CHEFE_MEDICOS]: '/chefe-medicos',
+    [TipoPerfil.CHEFE_ENFERMEIROS]: '/chefe-enfermeiros',
+    [TipoPerfil.CHEFE_AMBULANCIAS]: '/chefe-ambulancias',
   };
   return routes[perfil] || '/login';
 }

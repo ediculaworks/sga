@@ -24,6 +24,7 @@ import { Card } from '@/components/ui/card';
 import { Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatSexo } from '@/lib/utils/formatters';
 
 interface PacienteComAtendimento {
   id: number;
@@ -264,13 +265,7 @@ export function PacientesTable({ onVerHistorico }: PacientesTableProps) {
                     {paciente.nome_completo}
                   </TableCell>
                   <TableCell>{paciente.idade || '-'}</TableCell>
-                  <TableCell>
-                    {paciente.sexo === 'M'
-                      ? 'Masculino'
-                      : paciente.sexo === 'F'
-                      ? 'Feminino'
-                      : '-'}
-                  </TableCell>
+                  <TableCell>{formatSexo(paciente.sexo)}</TableCell>
                   <TableCell>
                     {paciente.ultimo_atendimento
                       ? format(

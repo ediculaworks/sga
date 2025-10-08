@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Users, Ambulance } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { STATUS_COLORS, STATUS_LABELS, TIPO_TRABALHO_LABELS, TIPO_AMBULANCIA_LABELS } from '@/lib/utils/styles';
+import { memo } from 'react';
 
 /**
  * Componente de Card de Ocorrência
@@ -24,7 +26,7 @@ interface OcorrenciaCardProps {
     tipo_ambulancia: 'BASICA' | 'EMERGENCIA';
     data_ocorrencia: string;
     horario_saida: string;
-    horario_no_local: string;
+    horario_no_local: string | null;
     local_ocorrencia: string;
     status: 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA';
     vagas_disponiveis?: number;
@@ -34,37 +36,11 @@ interface OcorrenciaCardProps {
   onVerDetalhes: (id: number) => void;
 }
 
-const STATUS_LABELS = {
-  EM_ABERTO: 'Em Aberto',
-  CONFIRMADA: 'Confirmada',
-  EM_ANDAMENTO: 'Em Andamento',
-  CONCLUIDA: 'Concluída',
-};
-
-const STATUS_COLORS = {
-  EM_ABERTO: 'bg-blue-100 text-blue-800 border-blue-200',
-  CONFIRMADA: 'bg-green-100 text-green-800 border-green-200',
-  EM_ANDAMENTO: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  CONCLUIDA: 'bg-gray-100 text-gray-800 border-gray-200',
-};
-
-const TIPO_TRABALHO_LABELS = {
-  EVENTO: 'Evento',
-  DOMICILIAR: 'Domiciliar',
-  EMERGENCIA: 'Emergência',
-  TRANSFERENCIA: 'Transferência',
-};
-
-const TIPO_AMBULANCIA_LABELS = {
-  BASICA: 'Básica',
-  EMERGENCIA: 'Emergência',
-};
-
-export function OcorrenciaCard({
+const OcorrenciaCardComponent = ({
   ocorrencia,
   variant = 'default',
   onVerDetalhes,
-}: OcorrenciaCardProps) {
+}: OcorrenciaCardProps) => {
   const isConfirmed = variant === 'confirmed';
 
   return (
@@ -152,4 +128,7 @@ export function OcorrenciaCard({
       </CardContent>
     </Card>
   );
-}
+};
+
+// Memoizar o componente para evitar re-renders desnecessários
+export const OcorrenciaCard = memo(OcorrenciaCardComponent);

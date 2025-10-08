@@ -175,6 +175,8 @@ export function useOcorrenciasDisponiveis(
       };
     },
     enabled: !!usuarioId,
-    refetchInterval: 30000, // Refetch a cada 30 segundos
+    // Otimização: Removido refetchInterval para evitar polling desnecessário
+    // As queries serão invalidadas manualmente após ações (confirmar participação)
+    staleTime: 1000 * 60 * 2, // 2 minutos - dados considerados frescos
   });
 }

@@ -3,10 +3,10 @@ import type {
   Ocorrencia,
   OcorrenciaCompleta,
   OcorrenciaFormData,
-  StatusOcorrencia,
   TipoTrabalho,
   TipoAmbulancia
 } from '@/types';
+import { StatusOcorrencia } from '@/types';
 
 /**
  * Serviço de Ocorrências
@@ -215,9 +215,9 @@ export const ocorrenciasService = {
   async atualizarStatus(id: number, status: StatusOcorrencia) {
     const updates: any = { status_ocorrencia: status };
 
-    if (status === 'EM_ANDAMENTO') {
+    if (status === StatusOcorrencia.EM_ANDAMENTO) {
       updates.data_inicio = new Date().toISOString();
-    } else if (status === 'CONCLUIDA') {
+    } else if (status === StatusOcorrencia.CONCLUIDA) {
       updates.data_conclusao = new Date().toISOString();
     }
 
@@ -356,7 +356,7 @@ export const ocorrenciasService = {
         const todasConfirmadas = todasVagas?.every((v) => v.confirmado) ?? false;
 
         if (todasConfirmadas) {
-          await this.atualizarStatus(ocorrenciaId, 'CONFIRMADA');
+          await this.atualizarStatus(ocorrenciaId, StatusOcorrencia.CONFIRMADA);
         }
       }
 

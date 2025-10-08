@@ -30,7 +30,10 @@
       "Bash(git checkout:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\ndocs: Adicionar estratégia de branches e organização do repositório\n\n- Criar branch dev (desenvolvimento)\n- Criar branch staging (homologação/testes)\n- Manter branch main (produção)\n\n- Documentar ESTRATEGIA_BRANCHES.md\n  * Estrutura de branches\n  * Fluxo de trabalho (dev → staging → main)\n  * Comandos úteis\n  * Processo de merge via Pull Request\n  * Regras de proteção\n  * Boas práticas\n  * Instruções para Claude Code\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Implementar FASE 5.1 - Banco de Dados de Pacientes\n\n- Criar componente PacientesTable reutilizável\n  * Tabela completa com shadcn/ui Table\n  * Busca por nome (debounced, case-insensitive)\n  * Filtro por médico (select dropdown)\n  * Paginação (20 itens por página)\n  * Navegação anterior/próximo\n  * Contador de resultados\n\n- Colunas da tabela:\n  * Nome, idade, sexo\n  * Data do último atendimento\n  * Local da ocorrência\n  * Médico que atendeu\n  * Número da ocorrência\n  * Queixa principal\n  * Botão \"Ver Histórico\"\n\n- Query otimizada com joins:\n  * pacientes → atendimentos → ocorrencias → usuarios\n  * Ordenação por nome\n  * Cache de 5 minutos (React Query)\n  * Processa último atendimento de cada paciente\n\n- Estados de UI:\n  * Loading state com spinner\n  * Empty state (sem pacientes)\n  * Empty state (filtros sem resultados)\n  * Responsivo mobile/desktop\n\n- Implementar páginas:\n  * src/app/(dashboard)/medico/pacientes/page.tsx\n  * src/app/(dashboard)/chefe-medicos/pacientes/page.tsx\n  * Reutilização do componente PacientesTable\n  * Preparado para FASE 5.2 (modal de histórico)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

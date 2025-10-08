@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { Card } from '@/components/ui/card';
+import { TipoPerfil } from '@/types';
 
 // Configurar localizer com date-fns
 const locales = {
@@ -258,7 +259,7 @@ export default function AgendaEnfermeiroPage() {
           ocorrenciaId={selectedOcorrenciaId}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          perfil="ENFERMEIRO"
+          perfil={TipoPerfil.ENFERMEIRO}
         />
       )}
     </div>

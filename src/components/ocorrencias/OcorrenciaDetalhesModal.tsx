@@ -12,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatCurrency, formatLabel } from '@/lib/utils/formatters';
+import { getBadgeColor } from '@/lib/utils/styles';
 import {
   Clock,
   MapPin,
@@ -61,50 +63,6 @@ interface Participante {
   };
 }
 
-const getBadgeColor = (type: string, value: string) => {
-  if (type === 'tipo_trabalho') {
-    switch (value) {
-      case 'EVENTO':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'EMERGENCIA':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'DOMICILIAR':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'TRANSFERENCIA':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  } else if (type === 'tipo_ambulancia') {
-    switch (value) {
-      case 'BASICA':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'EMERGENCIA':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  } else if (type === 'status') {
-    return value === 'disponivel'
-      ? 'bg-green-100 text-green-800 border-green-200'
-      : 'bg-blue-100 text-blue-800 border-blue-200';
-  }
-  return 'bg-gray-100 text-gray-800 border-gray-200';
-};
-
-const formatLabel = (value: string) => {
-  const labels: Record<string, string> = {
-    EVENTO: 'Evento',
-    EMERGENCIA: 'Emergência',
-    DOMICILIAR: 'Domiciliar',
-    TRANSFERENCIA: 'Transferência',
-    BASICA: 'Básica',
-    MEDICO: 'Médico',
-    ENFERMEIRO: 'Enfermeiro',
-  };
-  return labels[value] || value;
-};
-
 export function OcorrenciaDetalhesModal({
   ocorrenciaId,
   isOpen,
@@ -153,7 +111,7 @@ export function OcorrenciaDetalhesModal({
         throw error;
       }
 
-      return data as OcorrenciaDetalhes;
+      return data as unknown as OcorrenciaDetalhes;
     },
     enabled: isOpen && !!ocorrenciaId,
   });
@@ -335,8 +293,8 @@ export function OcorrenciaDetalhesModal({
               </div>
             </div>
 
-            {/* Informações de Pagamento */}
-            {participantes.some((p) => p.valor_pagamento) && (
+            {/* Informações de Pagamento - Apenas para o profissional da mesma categoria */}
+            {participantes.some((p) => p.valor_pagamento && p.funcao === perfil) && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
                   <DollarSign className="w-4 h-4" />
@@ -344,7 +302,7 @@ export function OcorrenciaDetalhesModal({
                 </p>
                 <div className="space-y-2">
                   {participantes
-                    .filter((p) => p.valor_pagamento)
+                    .filter((p) => p.valor_pagamento && p.funcao === perfil)
                     .map((p) => (
                       <div key={p.id} className="flex justify-between text-sm">
                         <span className="text-gray-700">
@@ -352,10 +310,7 @@ export function OcorrenciaDetalhesModal({
                         </span>
                         <div className="text-right">
                           <span className="font-semibold text-green-800">
-                            {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            }).format(p.valor_pagamento || 0)}
+                            {formatCurrency(p.valor_pagamento || 0)}
                           </span>
                           {p.data_pagamento && (
                             <span className="block text-xs text-gray-600">

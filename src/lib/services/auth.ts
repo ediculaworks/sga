@@ -52,7 +52,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
       .select('*')
-      .eq('email', credentials.email)
+      .ilike('email', credentials.email)
       .single();
 
     console.log('[AUTH] Resultado da busca:', { userData, userError });
@@ -123,10 +123,17 @@ export async function getCurrentUser(): Promise<AuthResponse> {
     }
 
     // 2. Buscar dados completos do usuário
+    if (!session.user.email) {
+      return {
+        user: null,
+        error: 'Email não encontrado na sessão.',
+      };
+    }
+
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
       .select('*')
-      .eq('email', session.user.email)
+      .ilike('email', session.user.email)
       .single();
 
     if (userError || !userData) {
