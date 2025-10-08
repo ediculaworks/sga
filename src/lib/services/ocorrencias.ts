@@ -4,9 +4,8 @@ import type {
   OcorrenciaCompleta,
   OcorrenciaFormData,
   TipoTrabalho,
-  TipoAmbulancia
 } from '@/types';
-import { StatusOcorrencia } from '@/types';
+import { StatusOcorrencia, TipoAmbulancia } from '@/types';
 
 /**
  * Serviço de Ocorrências

@@ -10,30 +10,30 @@ export const criarOcorrenciaSchema = z
   .object({
     // Tipo de ambulância (define vagas automaticamente)
     tipo_ambulancia: z.nativeEnum(TipoAmbulancia, {
-      required_error: 'Selecione o tipo de ambulância',
-      invalid_type_error: 'Tipo de ambulância inválido',
+      message: 'Selecione o tipo de ambulância',
     }),
 
     // Quantidade adicional de enfermeiros (além da quantidade padrão)
     quantidade_enfermeiros_adicionais: z
-      .number({
-        invalid_type_error: 'Quantidade deve ser um número',
-      })
-      .int('Quantidade deve ser um número inteiro')
-      .min(0, 'Quantidade não pode ser negativa')
-      .max(5, 'Máximo de 5 enfermeiros adicionais')
-      .default(0),
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number())
+      .pipe(
+        z
+          .number()
+          .int('Quantidade deve ser um número inteiro')
+          .min(0, 'Quantidade não pode ser negativa')
+          .max(5, 'Máximo de 5 enfermeiros adicionais')
+      ),
 
     // Tipo de trabalho
     tipo_trabalho: z.nativeEnum(TipoTrabalho, {
-      required_error: 'Selecione o tipo de trabalho',
-      invalid_type_error: 'Tipo de trabalho inválido',
+      message: 'Selecione o tipo de trabalho',
     }),
 
     // Data da ocorrência
     data_ocorrencia: z
       .string({
-        required_error: 'Data da ocorrência é obrigatória',
+        message: 'Data da ocorrência é obrigatória',
       })
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD')
       .refine(
@@ -49,13 +49,13 @@ export const criarOcorrenciaSchema = z
     // Horários
     horario_saida: z
       .string({
-        required_error: 'Horário de saída é obrigatório',
+        message: 'Horário de saída é obrigatório',
       })
       .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM'),
 
     horario_chegada_local: z
       .string({
-        required_error: 'Horário previsto no local é obrigatório',
+        message: 'Horário previsto no local é obrigatório',
       })
       .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM'),
 
@@ -69,7 +69,7 @@ export const criarOcorrenciaSchema = z
     // Local e endereço
     local_ocorrencia: z
       .string({
-        required_error: 'Local da ocorrência é obrigatório',
+        message: 'Local da ocorrência é obrigatório',
       })
       .min(3, 'Local deve ter pelo menos 3 caracteres')
       .max(255, 'Local não pode ter mais de 255 caracteres'),
@@ -82,16 +82,16 @@ export const criarOcorrenciaSchema = z
 
     // Coordenadas GPS (opcionais)
     latitude: z
-      .number()
-      .min(-90, 'Latitude inválida')
-      .max(90, 'Latitude inválida')
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number())
+      .pipe(z.number().min(-90, 'Latitude inválida').max(90, 'Latitude inválida'))
       .optional()
       .nullable(),
 
     longitude: z
-      .number()
-      .min(-180, 'Longitude inválida')
-      .max(180, 'Longitude inválida')
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number())
+      .pipe(z.number().min(-180, 'Longitude inválida').max(180, 'Longitude inválida'))
       .optional()
       .nullable(),
 
@@ -104,24 +104,21 @@ export const criarOcorrenciaSchema = z
 
     // Valores de pagamento
     valor_medico: z
-      .number({
-        invalid_type_error: 'Valor deve ser um número',
-      })
-      .min(0, 'Valor não pode ser negativo')
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number())
+      .pipe(z.number().min(0, 'Valor não pode ser negativo'))
       .optional()
       .nullable(),
 
     valor_enfermeiro: z
-      .number({
-        required_error: 'Valor do enfermeiro é obrigatório',
-        invalid_type_error: 'Valor deve ser um número',
-      })
-      .min(0, 'Valor não pode ser negativo'),
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number())
+      .pipe(z.number().min(0, 'Valor não pode ser negativo')),
 
     // Data de pagamento
     data_pagamento: z
       .string({
-        required_error: 'Data de pagamento é obrigatória',
+        message: 'Data de pagamento é obrigatória',
       })
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
   })

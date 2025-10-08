@@ -41,7 +41,7 @@ export function CriarOcorrenciaForm({
     formState: { errors },
     watch,
     setValue,
-  } = useForm<CriarOcorrenciaFormData>({
+  } = useForm({
     resolver: zodResolver(criarOcorrenciaSchema),
     defaultValues: {
       quantidade_enfermeiros_adicionais: 0,
@@ -120,9 +120,7 @@ export function CriarOcorrenciaForm({
               type="number"
               min="0"
               max="5"
-              {...register('quantidade_enfermeiros_adicionais', {
-                valueAsNumber: true,
-              })}
+              {...register('quantidade_enfermeiros_adicionais')}
               placeholder="0"
             />
             <p className="text-sm text-gray-500">
@@ -266,7 +264,7 @@ export function CriarOcorrenciaForm({
                 id="latitude"
                 type="number"
                 step="any"
-                {...register('latitude', { valueAsNumber: true })}
+                {...register('latitude')}
                 placeholder="-22.9068"
               />
               {errors.latitude && (
@@ -283,7 +281,7 @@ export function CriarOcorrenciaForm({
                 id="longitude"
                 type="number"
                 step="any"
-                {...register('longitude', { valueAsNumber: true })}
+                {...register('longitude')}
                 placeholder="-43.1729"
               />
               {errors.longitude && (
@@ -375,7 +373,7 @@ export function CriarOcorrenciaForm({
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register('valor_medico', { valueAsNumber: true })}
+                  {...register('valor_medico')}
                   placeholder="0.00"
                 />
                 {errors.valor_medico && (
@@ -397,7 +395,7 @@ export function CriarOcorrenciaForm({
                 type="number"
                 step="0.01"
                 min="0"
-                {...register('valor_enfermeiro', { valueAsNumber: true })}
+                {...register('valor_enfermeiro')}
                 placeholder="0.00"
               />
               {errors.valor_enfermeiro && (
