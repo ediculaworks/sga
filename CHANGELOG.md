@@ -5,6 +5,115 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.13.1] - 2025-10-08
+
+### 🐛 Corrigido
+
+#### Correções de Performance e Sessão (Safari/Mac)
+
+**Problema Reportado:**
+- Login lento ou necessidade de logar duas vezes no Safari/Mac
+- Dados param de carregar após período de inatividade
+- Necessário atualizar página manualmente para recarregar dados
+
+**Cliente Supabase** (`src/lib/supabase/client.ts`)
+- **Configuração otimizada para Safari:**
+  - autoRefreshToken: true - Refresh automático do token de sessão
+  - persistSession: true - Manter sessão entre reloads
+  - detectSessionInUrl: true - Detectar sessão na URL
+  - storageKey: 'sga-auth-token' - Chave customizada para evitar conflitos
+  - flowType: 'pkce' - Mais seguro e compatível com Safari
+- **Headers customizados:**
+  - x-application-name: 'sga' - Identificação do app
+- **Configuração de realtime:**
+  - eventsPerSecond: 2 - Reduzir carga no Safari
+
+**QueryProvider** (`src/components/providers/QueryProvider.tsx`)
+- **Cache otimizado:**
+  - staleTime reduzido para 2 minutos (era 5 minutos)
+  - gcTime reduzido para 5 minutos (era 10 minutos)
+  - retry: 2 tentativas com exponential backoff
+- **Revalidação automática habilitada:**
+  - refetchOnWindowFocus: true - Recarrega ao focar janela
+  - refetchOnReconnect: true - Recarrega ao reconectar internet
+  - refetchOnMount: true - Recarrega ao montar componente
+- **Detecção de inatividade:**
+  - Listener de eventos: mousedown, keydown, scroll, touchstart, click
+  - Timer de 5 minutos de inatividade
+  - Invalida todas as queries após inatividade prolongada
+- **Detecção de visibilitychange:**
+  - Detecta quando tab fica inativa/ativa
+  - Invalida queries se tab ficou inativa por mais de 2 minutos
+  - Atualiza lastActivity ao retornar à tab
+- **Logs de debug:**
+  - Console.log ao invalidar queries por inatividade
+  - Console.log ao revalidar queries após tab ativa
+
+**AuthProvider** (`src/components/providers/AuthProvider.tsx`)
+- **Listener de eventos de autenticação:**
+  - onAuthStateChange para detectar mudanças de sessão
+  - SIGNED_OUT: limpa usuário do state
+  - SIGNED_IN / TOKEN_REFRESHED: recarrega dados do usuário
+  - PASSWORD_RECOVERY: log de recuperação de senha
+- **Refresh automático de sessão:**
+  - Intervalo de 50 minutos (token expira em 60min)
+  - Chama supabase.auth.refreshSession() automaticamente
+  - Se falhar o refresh, faz logout automático
+  - Logs de debug no console
+- **Busca atualizada do usuário:**
+  - Query com .ilike() para case-insensitive
+  - Atualiza state ao receber TOKEN_REFRESHED
+- **Cleanup apropriado:**
+  - Unsubscribe do listener ao desmontar
+  - Clear do interval de refresh
+
+### 🎯 Impacto das Correções
+
+**Login no Safari/Mac:**
+- ✅ Configuração PKCE resolve problemas de autenticação no Safari
+- ✅ Refresh automático evita expiração silenciosa de sessão
+- ✅ Detecção de sessão na URL melhora fluxo de auth
+
+**Dados param após inatividade:**
+- ✅ Detecção de inatividade invalida cache automaticamente
+- ✅ Visibilitychange revalida queries ao voltar à tab
+- ✅ RefetchOnWindowFocus recarrega dados ao focar janela
+- ✅ Usuário não precisa mais atualizar página manualmente
+
+**Performance:**
+- ✅ Cache reduzido evita dados desatualizados
+- ✅ Retry com exponential backoff melhora resiliência
+- ✅ Queries invalidadas automaticamente ao detectar inatividade
+- ✅ Menos requisições desnecessárias com staleTime inteligente
+
+**Logs de Debug:**
+- Console mostra eventos de autenticação
+- Console mostra refresh de sessão
+- Console mostra invalidação de queries
+- Facilita debugging de problemas de sessão
+
+### 📝 Arquivos Modificados
+
+- `src/lib/supabase/client.ts` - Configuração otimizada (+28 linhas)
+- `src/components/providers/QueryProvider.tsx` - Detecção de inatividade (+70 linhas)
+- `src/components/providers/AuthProvider.tsx` - Refresh automático (+55 linhas)
+
+### ⚠️ Observações
+
+**Teste Recomendado:**
+1. Fazer login no Safari/Mac
+2. Deixar tab inativa por 3 minutos
+3. Voltar à tab - dados devem recarregar automaticamente
+4. Deixar sistema aberto por 55 minutos
+5. Verificar console - deve mostrar "Session refreshed successfully"
+
+**Compatibilidade:**
+- Todas as correções são compatíveis com Chrome, Firefox, Safari, Edge
+- PKCE flow é o recomendado pela Supabase para produção
+- Listeners de inatividade funcionam em todos os navegadores modernos
+
+---
+
 ## [0.13.0] - 2025-10-08
 
 ### ✅ Adicionado
