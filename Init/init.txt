@@ -1,0 +1,408 @@
+# SISTEMA DE GESTÃO DE AMBULÂNCIAS - CONTEXTO DO PROJETO
+
+**Projeto:** Sistema completo de gestão de ambulâncias
+**Plataformas:** Web + Mobile (iOS/Android via PWA)
+**Database:** PostgreSQL via Supabase
+**Repositório:** GitHub
+
+---
+
+## ⚠️ INSTRUÇÕES CRÍTICAS - LEIA ANTES DE QUALQUER AÇÃO
+
+### 🔴 REGRA ABSOLUTA: O CHANGELOG.md É A FONTE DA VERDADE
+
+**ANTES DE FAZER QUALQUER COISA:**
+1. **LEIA `CHANGELOG.md`** para entender:
+   - Estado atual do projeto
+   - Última alteração feita
+   - Arquivos que já existem
+   - Próximo passo recomendado
+
+**APÓS COMPLETAR QUALQUER TAREFA:**
+2. **ATUALIZE `CHANGELOG.md` IMEDIATAMENTE** com:
+   - Data e hora (formato: DD/MM/YYYY HH:MM)
+   - O que foi feito (detalhado)
+   - Arquivos criados/modificados (caminhos completos)
+   - Dependências instaladas
+   - Configurações aplicadas
+   - Problemas e soluções
+   - Decisões técnicas
+   - Próximo passo recomendado
+   - Status atual
+
+**FORMATO OBRIGATÓRIO:**
+```markdown
+## [DD/MM/YYYY HH:MM] - [Descrição da Tarefa]
+
+### ✅ Completado
+- Item completado
+
+### 📁 Arquivos Criados
+- `/caminho/completo/arquivo.tsx` - Propósito
+
+### 📝 Arquivos Modificados
+- `/caminho/arquivo.ts` - O que mudou
+
+### 📦 Dependências
+- `pacote@versão` - Para que serve
+
+### 🐛 Problemas e Soluções
+- Problema → Solução
+
+### 🎯 Decisões Técnicas
+- Decisão → Justificativa
+
+### ⏭️ Próximo Passo
+[O que fazer a seguir]
+
+### 📊 Status Atual
+[Resumo do estado do projeto]
+```
+
+**⚠️ SEM CHANGELOG.md ATUALIZADO = TRABALHO PERDIDO**
+
+---
+
+## 🔄 WORKFLOW OBRIGATÓRIO
+
+```
+1. LER CHANGELOG.md (entender estado atual)
+   ↓
+2. LER este documento (contexto da tarefa)
+   ↓
+3. Planejar implementação
+   ↓
+4. Implementar código
+   ↓
+5. Testar manualmente
+   ↓
+6. ⚠️ ATUALIZAR CHANGELOG.md (CRÍTICO!) ⚠️
+   ↓
+7. Commit descritivo
+```
+
+**NUNCA PULE O PASSO 6!**
+
+---
+
+## 📋 VISÃO GERAL DO SISTEMA
+
+### Objetivo
+Sistema de gestão de ambulâncias para empresa que atende:
+- **Eventos** - Ambulância fica de plantão o dia todo
+- **Emergências** - Atendimentos urgentes
+- **Domiciliar** - Atendimento na residência do paciente
+- **Transferências** - Mover pacientes entre hospitais
+
+### Perfis de Usuário (6 tipos)
+
+**Perfis Operacionais:**
+1. **MEDICO** - Atende pacientes, registra prontuários
+2. **ENFERMEIRO** - Auxilia atendimentos, adiciona notas
+3. **MOTORISTA** - Tablet na ambulância, inicia/finaliza operações
+
+**Perfis Administrativos:**
+4. **CHEFE_MEDICOS** - Cria ocorrências, gerencia equipe médica
+5. **CHEFE_ENFERMEIROS** - Verifica equipamentos médicos, libera ambulâncias
+6. **CHEFE_AMBULANCIAS** - Verifica veículos, atribui recursos
+
+---
+
+## 📊 REGRAS DE NEGÓCIO ESSENCIAIS
+
+### Estados das Ocorrências
+1. **EM_ABERTO** → Criada, aguardando profissionais confirmarem
+2. **CONFIRMADA** → Profissionais confirmados, aguardando atribuição de ambulância
+3. **EM_ANDAMENTO** → Motorista iniciou, operação ativa
+4. **CONCLUIDA** → Finalizada
+
+**Transições Automáticas:**
+- EM_ABERTO → CONFIRMADA (quando todas as vagas preenchidas)
+- Ambulância → PENDENTE (quando ocorrência concluída)
+
+### Tipos de Ambulância
+- **BASICA** → 1 Enfermeiro (sem médico)
+- **EMERGENCIA** → 1 Médico + 1 Enfermeiro
+
+**Regra:** Tipo da ambulância define automaticamente a equipe necessária
+
+### Status das Ambulâncias
+- **PRONTA** → Liberada (checklists técnico E médico OK)
+- **PENDENTE** → Aguardando verificação
+- **REVISAO** → Precisa manutenção
+
+### Fluxo de Atribuição
+1. Chefe dos Médicos cria ocorrência
+2. Profissionais se inscrevem
+3. **Chefe das Ambulâncias** atribui ambulância + motorista
+4. **Motorista** inicia no tablet → Todos veem "EM_ANDAMENTO"
+
+### Gestão de Materiais
+- **Chefe dos Enfermeiros** verifica equipamentos médicos (matinal)
+- **Médico** registra consumo ao FINAL da ocorrência
+- **Sistema** atualiza estoque automaticamente
+- **Ambulância** volta como PENDENTE após uso
+
+### Disponibilidade
+- Profissionais de folga → Não veem ocorrências
+- Profissionais já alocados → Não veem ocorrências
+- Sistema verifica agenda automaticamente
+
+---
+
+## 🛠️ STACK TECNOLÓGICA
+
+### Core
+- **Next.js 14+** (App Router) + **React 18** + **TypeScript**
+- **Tailwind CSS** + **shadcn/ui** (componentes)
+- **Supabase** (PostgreSQL, Auth, Storage, Realtime)
+
+### State & Data
+- **Zustand** (state global)
+- **React Query** (cache server)
+- **React Hook Form** + **Zod** (forms)
+
+### Features
+- **Mapbox/Google Maps** (GPS, rotas)
+- **date-fns** (datas)
+- **Recharts** (gráficos)
+- **React Hot Toast** (notificações)
+
+### PWA & Mobile
+- **next-pwa** (Progressive Web App)
+- **Geolocation API** (GPS nativo)
+
+### Dev Tools
+- **ESLint** + **Prettier**
+- **TypeScript strict mode**
+
+---
+
+## 🎯 REGRAS DE OURO DO DESENVOLVIMENTO
+
+1. ⚠️ **SEMPRE ler CHANGELOG.md antes de começar**
+2. ⚠️ **SEMPRE atualizar CHANGELOG.md ao terminar**
+3. **SEMPRE usar TypeScript** (nunca `any`)
+4. **SEMPRE usar shadcn/ui** para componentes
+5. **SEMPRE validar forms** com Zod
+6. **SEMPRE usar React Query** para dados do servidor
+7. **SEMPRE pensar mobile-first** (responsivo)
+8. **SEMPRE usar Supabase RLS** (segurança)
+9. **SEMPRE testar** cenários positivos E negativos
+10. **SEMPRE commitar** com mensagem descritiva
+
+---
+
+## 📁 ESTRUTURA DE PASTAS PADRÃO
+
+```
+/src
+  /app
+    /(auth)
+      /login
+    /(dashboard)
+      /[perfil]        # medico, enfermeiro, etc
+    /api
+  /components
+    /ui                # shadcn components
+    /shared            # reutilizáveis
+    /layout            # Layout, Sidebar, Header
+    /dashboard
+      /[perfil]        # específicos por perfil
+  /lib
+    /supabase
+      client.ts
+      types.ts
+    /utils
+  /types               # TypeScript types
+  /hooks               # Custom hooks
+  /stores              # Zustand stores
+```
+
+---
+
+## ✅ CHECKLIST DE QUALIDADE
+
+**Antes de considerar QUALQUER tarefa completa:**
+
+- [ ] TypeScript sem erros (`npm run type-check`)
+- [ ] ESLint sem warnings (`npm run lint`)
+- [ ] Responsivo (testar mobile + desktop)
+- [ ] Loading states visíveis
+- [ ] Error handling implementado
+- [ ] Forms validados (Zod)
+- [ ] Testado manualmente (positivo E negativo)
+- [ ] ⚠️ **CHANGELOG.md ATUALIZADO** ⚠️
+- [ ] Comentários em código complexo
+- [ ] Commit realizado
+
+**SE FALTOU ALGO = TAREFA INCOMPLETA**
+
+---
+
+## 💡 PADRÕES DE CÓDIGO
+
+### Componentes
+```typescript
+// Sempre com tipos explícitos
+interface Props {
+  title: string;
+  onClick: () => void;
+}
+
+export function Component({ title, onClick }: Props) {
+  // ...
+}
+```
+
+### Forms
+```typescript
+// Sempre com Zod + React Hook Form
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const schema = z.object({
+  field: z.string().min(1, 'Obrigatório'),
+});
+
+type FormData = z.infer<typeof schema>;
+```
+
+### Queries Supabase
+```typescript
+// Sempre com React Query
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+
+export function useData() {
+  return useQuery({
+    queryKey: ['key'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('table').select();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+```
+
+### Nomenclatura
+- **Componentes:** PascalCase (`UserCard.tsx`)
+- **Funções/Hooks:** camelCase (`useAuth.ts`)
+- **Tipos:** PascalCase com sufixo (`UserData`, `ApiResponse`)
+- **Constantes:** UPPER_SNAKE_CASE (`MAX_ITEMS`)
+
+---
+
+## 🎨 DESIGN PRINCIPLES
+
+### UX
+- **Touch-friendly** (tablets, mobile)
+- **Feedback imediato** (loading, success, error)
+- **Mobile-first** (responsivo por padrão)
+- **Acessibilidade** (keyboard navigation, ARIA)
+
+### Performance
+- **Lazy loading** (componentes pesados)
+- **React Query cache** (evitar requests desnecessárias)
+- **Debounce** (inputs de busca)
+- **Optimistic updates** (melhor UX)
+
+### Segurança
+- **Row Level Security** (Supabase)
+- **Validação server + client** (Zod)
+- **Sanitização** (inputs do usuário)
+- **HTTPS only** (produção)
+
+---
+
+## 🚨 QUANDO ENCONTRAR PROBLEMAS
+
+1. **Documentar no CHANGELOG.md**
+   - Problema encontrado
+   - Solução aplicada
+   - Por que aconteceu
+
+2. **Perguntar ao usuário** se:
+   - Decisão afeta arquitetura
+   - Múltiplas soluções possíveis
+   - Breaking change necessário
+   - Credenciais/senhas necessárias
+
+3. **Nunca assumir** estruturas não documentadas
+
+---
+
+## 📝 MENSAGENS DE COMMIT
+
+**Formato:**
+```
+tipo: descrição curta
+
+Descrição detalhada (opcional)
+```
+
+**Tipos:**
+- `feat:` Nova funcionalidade
+- `fix:` Correção de bug
+- `docs:` Documentação
+- `style:` Formatação
+- `refactor:` Refatoração
+- `test:` Testes
+- `chore:` Manutenção
+
+**Exemplo:**
+```
+feat: adiciona dashboard do médico
+
+- Implementa estatísticas
+- Cria lista de ocorrências
+- Adiciona modal de detalhes
+```
+
+---
+
+## 🎯 FOCO E PRIORIDADES
+
+### Sempre Priorizar
+1. **Funcionalidade** sobre estética
+2. **Performance** sobre features extras
+3. **Segurança** sobre conveniência
+4. **Documentação** sobre código rápido
+5. **Simplicidade** sobre complexidade
+
+### Evitar
+- ❌ Over-engineering
+- ❌ Premature optimization
+- ❌ Código duplicado
+- ❌ Dependências desnecessárias
+- ❌ Comentários óbvios
+
+---
+
+## 📚 REFERÊNCIAS RÁPIDAS
+
+- **Supabase:** https://supabase.com/docs
+- **Next.js:** https://nextjs.org/docs
+- **shadcn/ui:** https://ui.shadcn.com
+- **React Query:** https://tanstack.com/query
+- **Zod:** https://zod.dev
+
+---
+
+## 🎓 LEMBRE-SE
+
+**Este documento = COMO fazer**
+**CHANGELOG.md = O QUE foi feito**
+
+**Use ambos sempre:**
+- Este documento → Contexto e regras
+- CHANGELOG.md → Estado atual e histórico
+
+**NUNCA comece sem ler CHANGELOG.md**
+**NUNCA termine sem atualizar CHANGELOG.md**
+
+---
+
+**FIM DO CONTEXTO - BOA SORTE! 🚑**
