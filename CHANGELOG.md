@@ -5,6 +5,154 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.13.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 7.1 - Dashboard do Chefe dos Médicos
+
+**Hook useChefeMedicosStats** (`src/hooks/useChefeMedicosStats.ts`)
+- Hook customizado para estatísticas agregadas do sistema
+- **5 Queries Principais:**
+  1. **Ambulâncias Ativas:** COUNT de ambulâncias com status EM_OPERACAO
+  2. **Profissionais Disponíveis:** Query na tabela escala filtrando por data de hoje e disponivel=true
+  3. **Ocorrências (hoje/semana/mês):** 3 queries COUNT com filtros de data diferentes
+  4. **Tempo Médio de Resposta:** Calcula duração média (data_conclusao - data_inicio) das ocorrências concluídas na última semana
+  5. **Avisos do Sistema:** Busca ambulâncias em manutenção, CNH vencidas/vencendo, estoque baixo
+- **Avisos Implementados:**
+  - **Manutenção:** Ambulâncias com status REVISAO ou PENDENTE
+  - **CNH Vencida:** Motoristas com validade_cnh < hoje (severidade alta)
+  - **CNH Vencendo:** Motoristas com validade_cnh < hoje+30dias (severidade média)
+  - **Estoque Baixo:** Items com quantidade_atual < quantidade_minima (severidade alta se quantidade=0)
+- **Tipos TypeScript:**
+  - Interface ChefeMedicosStats com 6 propriedades
+  - Interface Aviso com id, tipo, titulo, descricao, severidade, data
+  - Tipos de aviso: manutencao | cnh_vencida | cnh_vencendo | estoque_baixo
+  - Severidade: alta | media | baixa
+- **Performance:**
+  - Cache de 2-5 minutos por query (staleTime)
+  - Queries habilitadas apenas quando necessário
+  - Ordenação de avisos por severidade (alta → média → baixa)
+  - Client-side filter para estoque baixo
+
+**Dashboard do Chefe dos Médicos** (`src/app/(dashboard)/chefe-medicos/page.tsx`)
+- Dashboard completo substituindo placeholder anterior
+- **4 Cards de Estatísticas:**
+  - **Card 1: Ambulâncias Ativas** - Ícone Ambulance azul, mostra total em operação
+  - **Card 2: Profissionais Disponíveis** - Ícone Users verde, escalados para hoje
+  - **Card 3: Ocorrências** - Ícone Activity roxo, CLICÁVEL para trocar período (hoje/semana/mês)
+  - **Card 4: Tempo Médio** - Ícone Clock laranja, duração formatada (Xh Ymin)
+- **Seção de Avisos e Alertas:**
+  - Grid responsivo (1/2/3 colunas)
+  - Cards coloridos por severidade:
+    * Vermelho: severidade alta
+    * Amarelo: severidade média
+    * Azul: severidade baixa
+  - Ícones específicos por tipo:
+    * Wrench (chave inglesa): manutenção
+    * CreditCard: CNH
+    * Package: estoque
+  - Exibe título, descrição e data de vencimento (se aplicável)
+  - Mostra apenas 6 primeiros avisos
+  - Botão "Ver todos os X avisos" se houver mais de 6
+  - Empty state quando não há avisos (ícone verde "Tudo em Ordem!")
+- **Botão de Ação Principal:**
+  - Botão verde grande "Criar Nova Ocorrência"
+  - Ícone Plus à esquerda
+  - Posicionado no header (canto superior direito)
+  - Redireciona para /chefe-medicos/central-despacho (FASE 7.2)
+- **Funcionalidades:**
+  - Estado `periodo` para controlar filtro de ocorrências
+  - Função `formatarTempo()` converte minutos para formato legível
+  - Função `getAvisoIcon()` retorna ícone baseado no tipo
+  - Função `getAvisoColor()` retorna classes CSS por severidade
+  - Loading states em todos os cards
+  - Proteção de rota com ProtectedRoute para CHEFE_MEDICOS
+- **UI/UX:**
+  - Layout responsivo (grid 1→2→4 colunas)
+  - Cores consistentes com design system
+  - Hover effects nos cards clicáveis
+  - Feedback visual claro em todos os elementos
+  - Título "Dashboard Geral" + subtítulo
+
+### 🎯 Funcionalidades
+
+**Estatísticas em Tempo Real:**
+- Sistema conta automaticamente ambulâncias em operação
+- Verifica profissionais escalados do dia atual
+- Rastreia ocorrências por período (hoje/semana/mês)
+- Calcula tempo médio de duração das ocorrências
+
+**Sistema de Avisos Inteligente:**
+- Detecta automaticamente problemas no sistema
+- Prioriza avisos por severidade (alta aparece primeiro)
+- Mostra informações contextuais (placas, nomes, datas)
+- Destaque visual diferenciado para cada tipo de alerta
+
+**Interatividade:**
+- Card de ocorrências clicável para alternar período
+- Botão de ação rápida para criar ocorrência
+- Future: botão "Ver todos" para lista completa de avisos
+
+**Queries Otimizadas:**
+- Uso de COUNT para melhor performance
+- Filtros de data no servidor (PostgreSQL)
+- Cache inteligente via React Query
+- Queries paralelas para reduzir tempo de carregamento
+
+### 📝 Notas Técnicas
+
+**Cálculo de Tempo Médio:**
+```typescript
+const duracoes = data.map((ocorrencia) => {
+  const inicio = new Date(ocorrencia.data_inicio!);
+  const conclusao = new Date(ocorrencia.data_conclusao!);
+  return (conclusao.getTime() - inicio.getTime()) / (1000 * 60); // minutos
+});
+const media = duracoes.reduce((acc, val) => acc + val, 0) / duracoes.length;
+```
+
+**Detecção de CNH Vencendo:**
+```typescript
+const hoje = new Date();
+const em30Dias = new Date(hoje.getTime() + 30 * 24 * 60 * 60 * 1000);
+// Query: .lte('validade_cnh', em30Dias)
+```
+
+**Estoque Baixo (Client-side Filter):**
+```typescript
+todosEstoques
+  .filter((est: any) => est.quantidade_atual < est.quantidade_minima)
+  .forEach((est: any) => {
+    avisosList.push({
+      severidade: est.quantidade_atual === 0 ? 'alta' : 'media',
+      // ...
+    });
+  });
+```
+
+**Arquivos Criados:**
+- `src/hooks/useChefeMedicosStats.ts` - Hook de estatísticas (266 linhas)
+
+**Arquivos Modificados:**
+- `src/app/(dashboard)/chefe-medicos/page.tsx` - Dashboard completo (225 linhas, +179 linhas)
+
+**Reutilização de Componentes:**
+- StatsCard (já existente desde FASE 3.1)
+- Button, Card (shadcn/ui)
+- ProtectedRoute (FASE 1.2)
+- Ícones Lucide React
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 7.2 - Central de Despacho**
+- Formulário complexo de criação de ocorrências
+- Validações com React Hook Form + Zod
+- Criação automática de vagas por tipo de ambulância
+- Geração automática de número de ocorrência
+
+---
+
 ## [0.12.0] - 2025-10-08
 
 ### ✅ Adicionado
