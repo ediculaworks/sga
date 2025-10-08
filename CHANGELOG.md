@@ -5,6 +5,75 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.9.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 5.1 - Banco de Dados de Pacientes
+
+**Componente PacientesTable** (`src/components/pacientes/PacientesTable.tsx`)
+- Tabela completa de pacientes com shadcn/ui Table
+- **Funcionalidades de Busca e Filtros:**
+  - Busca por nome (debounced, em tempo real)
+  - Filtro por médico (select dropdown)
+  - Busca case-insensitive
+  - Resetar página ao mudar filtros
+- **Colunas da Tabela:**
+  - Nome do paciente
+  - Idade
+  - Sexo (formatado)
+  - Data do último atendimento
+  - Local da ocorrência
+  - Médico que atendeu
+  - Número da ocorrência
+  - Queixa principal
+  - Botão "Ver Histórico"
+- **Paginação:**
+  - 20 itens por página
+  - Navegação anterior/próximo
+  - Indicador de página atual
+  - Contador de resultados
+- **Query Otimizada:**
+  - Join com atendimentos
+  - Join com ocorrências
+  - Join com usuários (médicos)
+  - Ordenação por nome
+  - Cache de 5 minutos
+- **Estados:**
+  - Loading state com spinner
+  - Empty state quando sem resultados
+  - Empty state quando filtros não retornam dados
+- **Responsivo:** Layout adaptável para mobile e desktop
+
+**Página de Pacientes do Médico** (`src/app/(dashboard)/medico/pacientes/page.tsx`)
+- Implementação da página para perfil MEDICO
+- Integração com PacientesTable
+- Handler para abrir histórico (preparado para FASE 5.2)
+- Título e descrição da página
+
+**Página de Pacientes do Chefe dos Médicos** (`src/app/(dashboard)/chefe-medicos/pacientes/page.tsx`)
+- Implementação da página para perfil CHEFE_MEDICOS
+- Reutilização do componente PacientesTable
+- Mesma funcionalidade que médico
+- Preparado para FASE 5.2 (modal de histórico)
+
+#### Estrutura de Branches
+
+**Documentação** (`docs/md/ESTRATEGIA_BRANCHES.md`)
+- Estratégia completa de branches (dev → staging → main)
+- Fluxo de trabalho detalhado
+- Comandos úteis para Git
+- Processo de Pull Request
+- Regras de proteção de branches
+- Boas práticas de commit
+- Instruções específicas para Claude Code
+- Guia de hotfixes urgentes
+
+**Branches Criadas:**
+- `dev` - Branch de desenvolvimento (ativa)
+- `staging` - Branch de homologação/testes
+- `main` - Branch de produção (protegida)
+
 ## [0.8.0] - 2025-10-08
 
 ### ✅ Adicionado
