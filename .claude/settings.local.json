@@ -33,7 +33,9 @@
       "Bash(git commit:*)",
       "Bash(test:*)",
       "Bash(npx tsc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git merge:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

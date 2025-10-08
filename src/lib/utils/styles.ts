@@ -34,7 +34,13 @@ export function getBadgeColor(type: string, value: string): string {
     }
   }
 
-  if (type === 'status') {
+  if (type === 'status' || type === 'status_ocorrencia') {
+    // Cores para status de ocorrência
+    return STATUS_COLORS[value] || 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+
+  if (type === 'vaga_status') {
+    // Cores para status de vaga (disponível/confirmado)
     return value === 'disponivel'
       ? 'bg-green-100 text-green-800 border-green-200'
       : 'bg-blue-100 text-blue-800 border-blue-200';
@@ -80,3 +86,18 @@ export const TIPO_AMBULANCIA_LABELS: Record<string, string> = {
   BASICA: 'Básica',
   EMERGENCIA: 'Emergência',
 };
+
+/**
+ * Retorna cor para eventos do calendário baseado no status
+ * Usado no React Big Calendar
+ */
+export function getCalendarEventColor(status: string): string {
+  const colors: Record<string, string> = {
+    EM_ABERTO: '#3b82f6', // blue-500
+    CONFIRMADA: '#10b981', // green-500
+    EM_ANDAMENTO: '#f59e0b', // amber-500
+    CONCLUIDA: '#6b7280', // gray-500
+  };
+
+  return colors[status] || '#6b7280';
+}

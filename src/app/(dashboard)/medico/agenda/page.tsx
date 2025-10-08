@@ -94,12 +94,13 @@ export default function AgendaMedicoPage() {
   const events: CalendarEvent[] =
     ocorrencias?.map((participacao: any) => {
       const occ = participacao.ocorrencias;
-      const dataOcorrencia = new Date(occ.data_ocorrencia + 'T00:00:00');
+      // CORREÇÃO: Usar parseISO para evitar problemas de timezone
+      const dataOcorrencia = new Date(occ.data_ocorrencia);
 
       // Horário de início (horario_saida)
       const [horaInicio, minInicio] = occ.horario_saida.split(':');
       const start = new Date(dataOcorrencia);
-      start.setHours(parseInt(horaInicio), parseInt(minInicio));
+      start.setHours(parseInt(horaInicio), parseInt(minInicio), 0, 0);
 
       // Horário de término (se houver, senão usa +2h do horário_chegada_local ou +4h do inicio)
       let end = new Date(start);
@@ -140,22 +141,23 @@ export default function AgendaMedicoPage() {
     setSelectedOcorrenciaId(null);
   };
 
-  // Estilizar eventos por status
+  // Estilizar eventos por status - CORES CORRIGIDAS
   const eventStyleGetter = (event: CalendarEvent) => {
     let backgroundColor = '#3b82f6'; // Azul padrão
 
+    // CORREÇÃO: Cores consistentes com STATUS_COLORS
     switch (event.resource.status) {
       case 'EM_ABERTO':
-        backgroundColor = '#6b7280'; // Cinza
+        backgroundColor = '#3b82f6'; // Azul - Em Aberto
         break;
       case 'CONFIRMADA':
-        backgroundColor = '#3b82f6'; // Azul
+        backgroundColor = '#10b981'; // Verde - Confirmada
         break;
       case 'EM_ANDAMENTO':
-        backgroundColor = '#10b981'; // Verde
+        backgroundColor = '#f59e0b'; // Amarelo/Amber - Em Andamento
         break;
       case 'CONCLUIDA':
-        backgroundColor = '#8b5cf6'; // Roxo
+        backgroundColor = '#6b7280'; // Cinza - Concluída
         break;
     }
 
