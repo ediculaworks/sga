@@ -34,7 +34,44 @@ Descrição clara e concisa da mudança.
 
 ### 🐛 Corrigido
 
-**1. Exibição de Ocorrências Confirmadas no Dashboard (Erro 3)**
+**1. Inscrição Duplicada em Ocorrências (Novo Bug Criado - CORRIGIDO)**
+
+**Problema:**
+- Após correção anterior do Erro 3, criei um novo bug
+- Profissional que confirmava participação continuava vendo ocorrência em "Disponíveis"
+- Isso permitia tentar se inscrever novamente na mesma ocorrência
+- Sistema exibia erro ao tentar confirmar segunda vez
+
+**Causa:**
+- Hook `useOcorrenciasDisponiveis` tinha bloco (linhas 136-162) que:
+  * Verificava: `jaConfirmado && status === 'EM_ABERTO'`
+  * Adicionava ocorrência em "Disponíveis" com flag `profissional_confirmado: true`
+- Intenção era mostrar que já confirmou, mas causou inscrição duplicada
+
+**Solução:**
+- Remover completamente o bloco problemático
+- Profissional que já confirmou NÃO deve ver ocorrência novamente
+- Só aparece em "Confirmadas" quando status da ocorrência mudar para CONFIRMADA
+
+**Logs de Debug Adicionados:**
+- Select expandido em `confirmarParticipacao`: id, usuario_id, funcao, confirmado
+- Log detalhado: total de vagas, status de confirmação, decisão de mudança de status
+- Isso permitirá investigar problema de status mudando incorretamente
+
+**Arquivos:**
+- `src/hooks/useOcorrenciasDisponiveis.ts:136-162` - Bloco removido
+- `src/lib/services/ocorrencias.ts:464-492` - Logs adicionados
+
+**Resultado:**
+- ✅ Impossível tentar inscrição duplicada
+- ✅ Profissional não vê ocorrência após confirmar
+- ⏳ Logs permitirão debug do status (Erro 3 ainda não resolvido)
+
+**Commit:** `774ea59`
+
+---
+
+**2. Exibição de Ocorrências Confirmadas no Dashboard (Erro 3 - PARCIALMENTE RESOLVIDO)**
 
 **Problema:**
 - Quando profissional confirmava participação em ocorrência, ela aparecia em "Minhas Ocorrências Confirmadas" mesmo com status "EM_ABERTO"
