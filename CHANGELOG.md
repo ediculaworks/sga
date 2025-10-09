@@ -5,6 +5,54 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.15.1] - 2025-10-08
+
+### 🐛 Corrigido
+
+#### Correção de Validação de Horários e Overflow de Texto
+
+**Problema 1: Validação de Horário de Término Após Meia-Noite**
+- **Erro:** Ao criar ocorrências do tipo EVENTO com horário de término após meia-noite (ex: evento começa às 22:00 e termina às 02:00), o sistema interpretava incorretamente como horário anterior ao início
+- **Causa:** Validação comparava apenas minutos totais sem considerar eventos que passam da meia-noite (virada de dia)
+- **Solução:** Implementada lógica que detecta quando horário de término é menor que horário de chegada e automaticamente adiciona 24 horas (1440 minutos) ao cálculo
+- **Exemplo:** Evento que começa às 22:00 e termina às 02:00 agora é validado corretamente
+- **Arquivo modificado:** `src/lib/validations/ocorrencia.ts` (linhas 227-251)
+
+**Problema 2: Overflow de Texto no Modal de Detalhes**
+- **Erro:** Ao adicionar descrição muito larga em uma ocorrência, o modal não mantinha sua largura inicial, fazendo com que o usuário precisasse rolar horizontalmente para ver dados importantes (pagamento, tipo de ambulância, profissionais)
+- **Causa:** Campos de texto (`descrição`, `local_ocorrencia`, `endereco_completo`) não tinham quebra de palavra configurada
+- **Solução:** Adicionadas classes CSS `break-words` e `overflow-wrap-anywhere` nos campos de texto longos
+- **Campos corrigidos:**
+  - Descrição da ocorrência (linha 304)
+  - Local da ocorrência (linha 316)
+  - Endereço completo (linha 320)
+- **Arquivo modificado:** `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx`
+
+### 📝 Arquivos Modificados
+- `src/lib/validations/ocorrencia.ts` - Validação de horário após meia-noite (+9 linhas)
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx` - Prevenção de overflow (+3 classes CSS)
+
+### 🧪 Testes
+- ✅ ESLint sem erros (`npm run lint`)
+- ✅ Validação permite eventos que passam da meia-noite (22:00 → 02:00)
+- ✅ Modal mantém largura correta mesmo com textos muito longos
+- ✅ Não é mais necessário scroll horizontal no modal
+
+### 🎯 Impacto das Correções
+
+**Validação de Horários:**
+- Eventos noturnos (shows, festas, formaturas) agora podem ser criados corretamente
+- Sistema aceita horários como: 23:00 → 03:00, 20:00 → 02:00, etc.
+- Validação continua bloqueando horários inválidos (ex: 14:00 → 13:00 no mesmo dia)
+
+**UX do Modal:**
+- Modal sempre mantém largura fixa e responsiva
+- Textos longos quebram automaticamente
+- Dados importantes (valores, profissionais, tipo de ambulância) sempre visíveis
+- Melhor experiência em dispositivos mobile
+
+---
+
 ## [0.15.0] - 2025-10-08
 
 ### ✅ Adicionado

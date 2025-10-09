@@ -227,13 +227,20 @@ export const criarOcorrenciaSchema = z
   .refine(
     (data) => {
       // Validação: horario_termino deve ser depois de horario_chegada_local (se fornecido)
+      // PERMITE horários após meia-noite (eventos que passam para o dia seguinte)
       if (!data.horario_termino) return true;
 
       const [horaChegada, minChegada] = data.horario_chegada_local.split(':').map(Number);
       const [horaTermino, minTermino] = data.horario_termino.split(':').map(Number);
 
       const chegada = horaChegada * 60 + minChegada;
-      const termino = horaTermino * 60 + minTermino;
+      let termino = horaTermino * 60 + minTermino;
+
+      // Se o horário de término for menor que a chegada, assume que passou da meia-noite
+      // Adiciona 24 horas (1440 minutos) ao horário de término
+      if (termino <= chegada) {
+        termino += 1440; // 24 horas em minutos
+      }
 
       return termino > chegada;
     },

@@ -301,7 +301,7 @@ export function OcorrenciaDetalhesModal({
                 <p className="text-sm text-gray-600 mb-2 font-medium">
                   Descrição
                 </p>
-                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border">
+                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border break-words overflow-wrap-anywhere">
                   {ocorrencia.descricao}
                 </p>
               </div>
@@ -313,11 +313,11 @@ export function OcorrenciaDetalhesModal({
                 <MapPin className="w-4 h-4" />
                 Local da Ocorrência
               </p>
-              <p className="text-gray-900 font-medium">
+              <p className="text-gray-900 font-medium break-words">
                 {ocorrencia.local_ocorrencia}
               </p>
               {ocorrencia.endereco_completo && (
-                <p className="text-gray-600 text-sm mt-1">
+                <p className="text-gray-600 text-sm mt-1 break-words">
                   {ocorrencia.endereco_completo}
                 </p>
               )}
