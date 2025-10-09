@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -117,6 +117,34 @@ export function OcorrenciaDetalhesModal({
   const [isAvisoModalOpen, setIsAvisoModalOpen] = useState(false);
   const [avisoTexto, setAvisoTexto] = useState('');
   const [isEnviandoAviso, setIsEnviandoAviso] = useState(false);
+
+  // Estado para armazenar ID do usuário logado
+  const [usuarioLogadoId, setUsuarioLogadoId] = useState<number | null>(null);
+
+  // Buscar ID do usuário logado
+  useEffect(() => {
+    const fetchUsuarioLogado = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const { data: usuario } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+
+        if (usuario) {
+          setUsuarioLogadoId(usuario.id);
+        }
+      }
+    };
+
+    if (isOpen) {
+      fetchUsuarioLogado();
+    }
+  }, [isOpen]);
 
   const { data: ocorrencia, isLoading } = useQuery({
     queryKey: ['ocorrencia-detalhes', ocorrenciaId],
@@ -708,9 +736,10 @@ export function OcorrenciaDetalhesModal({
               )}
 
             {/* Informações de Pagamento */}
-            {/* Chefe dos Médicos vê todos os valores | Profissionais veem apenas seu valor */}
+            {/* Chefe dos Médicos vê todos os valores | Profissionais veem apenas seu próprio valor */}
             {participantes.some((p) => p.valor_pagamento) && (
-              perfil === 'CHEFE_MEDICOS' || participantes.some((p) => p.valor_pagamento && p.funcao === perfil)
+              perfil === 'CHEFE_MEDICOS' ||
+              participantes.some((p) => p.valor_pagamento && p.usuario_id === usuarioLogadoId)
             ) && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
@@ -726,7 +755,7 @@ export function OcorrenciaDetalhesModal({
                   {participantes
                     .filter((p) =>
                       p.valor_pagamento &&
-                      (perfil === 'CHEFE_MEDICOS' || p.funcao === perfil)
+                      (perfil === 'CHEFE_MEDICOS' || p.usuario_id === usuarioLogadoId)
                     )
                     .map((p) => (
                       <div key={p.id} className="flex justify-between text-sm">
