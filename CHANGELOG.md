@@ -30,6 +30,100 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.14] - 2025-10-09
+
+### 🐛 Corrigido
+
+**1. Visualização de Pagamentos no Modal de Detalhes**
+
+**Problema:**
+- Enfermeiros e médicos visualizavam pagamentos de TODOS os profissionais da mesma função
+- Exemplo: Se havia 2 enfermeiros na ocorrência, ambos viam os 2 valores
+- Violava privacidade de informações financeiras
+
+**Solução:**
+- Adicionado estado `usuarioLogadoId` para identificar o usuário atual
+- Implementado `useEffect` para buscar ID do usuário ao abrir modal
+- Filtro atualizado: `p.usuario_id === usuarioLogadoId`
+- Chefe dos Médicos mantém visão completa de todos os pagamentos
+
+**Arquivos:**
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:3` - Import useEffect
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:122` - Estado usuarioLogadoId
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:124-147` - useEffect buscar usuário
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:742,758` - Filtros atualizados
+
+**Resultado:**
+- ✅ Médico vê apenas seu próprio pagamento
+- ✅ Enfermeiro vê apenas seu próprio pagamento
+- ✅ Chefe dos Médicos vê todos os pagamentos (inalterado)
+
+**Commit:** `38ebfe0`
+
+---
+
+**2. Overflow Horizontal no Modal de Detalhes**
+
+**Problema:**
+- Descrições muito longas causavam scroll horizontal
+- Usuário precisava rolar para direita para ver informações
+- Exemplo real: Ocorrência #OC2025100007 com descrição extensa
+- Local e endereço também podiam causar overflow
+
+**Solução:**
+- Adicionado `overflow-x-hidden` no DialogContent (largura fixa)
+- Adicionado `whitespace-pre-wrap` para quebra de linhas automática
+- Adicionado `max-w-full` em todos os textos longos
+- Garantido `break-words` em descrição, local e endereço
+
+**Arquivos:**
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:441` - overflow-x-hidden
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:502` - whitespace-pre-wrap
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:514,518` - max-w-full
+
+**Resultado:**
+- ✅ Modal sempre com largura fixa (max-w-2xl)
+- ✅ Descrições longas quebram automaticamente
+- ✅ Sem necessidade de scroll horizontal
+- ✅ Textos respeitam limite do container
+
+**Commit:** `1a36b6e`
+
+---
+
+**3. Validação de Mudança de Status de Ocorrência**
+
+**Verificação Realizada:**
+- Usuário reportou que ocorrências com múltiplos enfermeiros devem mudar status de "EM_ABERTO" para "CONFIRMADA" apenas quando TODAS as posições forem preenchidas
+
+**Resultado da Análise:**
+- ✅ Lógica **JÁ ESTAVA CORRETA** em `src/lib/services/ocorrencias.ts:464-480`
+- ✅ Código usa `.every()` para verificar se todas as vagas estão confirmadas
+- ✅ Só muda para CONFIRMADA quando 100% das vagas estiverem preenchidas
+- ✅ Nenhuma alteração necessária
+
+**Código Existente (Correto):**
+```typescript
+const todasConfirmadas = todasVagas?.every((v) => v.confirmado) ?? false;
+if (todasConfirmadas) {
+  await this.atualizarStatus(ocorrenciaId, StatusOcorrencia.CONFIRMADA);
+}
+```
+
+---
+
+**Decisões Técnicas:**
+- Privacidade de pagamentos → Filtrar por usuario_id ao invés de funcao
+- Overflow horizontal → overflow-x-hidden + max-w-full preventivo
+- Status de ocorrência → Validação já implementada corretamente
+
+**Próximo Passo:**
+- Testar correções em ambiente de desenvolvimento
+- Validar comportamento com múltiplos enfermeiros
+- Deploy para staging para testes com usuários reais
+
+---
+
 ## [0.18.13] - 2025-10-09
 
 ### 🐛 Corrigido
