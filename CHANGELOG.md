@@ -30,6 +30,79 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.8] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Problema: Erros 404 no Console (_rsc) para Rotas Inexistentes**
+
+**Sintomas:**
+- Console mostrando: `chefe-medicos/profissionais?_rsc=vw19r:1 Failed to load resource: 404`
+- Console mostrando: `chefe-medicos/escala?_rsc=vw19r:1 Failed to load resource: 404`
+- Requisições RSC (React Server Components) falhando
+- Possível impacto na performance e navegação
+
+**Causa Raiz Identificada:**
+- Arquivo `src/config/navigation.ts` continha 2 links no menu para rotas **que não existem**:
+  1. `/chefe-medicos/profissionais` (linha 125-130) ❌
+  2. `/chefe-medicos/escala` (linha 139-144) ❌
+- Next.js tentava fazer **prefetch** dessas rotas via RSC
+- Resultava em erros 404 no console
+- Links visíveis na Sidebar mas páginas não implementadas
+
+**Análise das Rotas Existentes:**
+- ✅ `/chefe-medicos` - Dashboard (existe)
+- ✅ `/chefe-medicos/ambulancias` - Gestão de ambulâncias (existe)
+- ✅ `/chefe-medicos/central-despacho` - Criar ocorrências (existe)
+- ✅ `/chefe-medicos/ocorrencias` - Banco de ocorrências (existe)
+- ✅ `/chefe-medicos/pacientes` - Banco de pacientes (existe)
+- ✅ `/chefe-medicos/rastreamento` - Rastreamento (existe)
+- ❌ `/chefe-medicos/profissionais` - **NÃO EXISTE**
+- ❌ `/chefe-medicos/escala` - **NÃO EXISTE**
+
+**Solução Aplicada:**
+
+1. **Remoção de Links Inexistentes** (`src/config/navigation.ts`)
+   - Removidos itens "Profissionais" e "Escala" do menu
+   - Links comentados com `// TODO: Adicionar quando implementado`
+   - Menu agora mostra apenas rotas implementadas
+   - Sidebar mais limpa e funcional
+
+2. **Validação de Outras Rotas**
+   - Verificadas todas as rotas em `navigation.ts`
+   - Confirmado que todas as outras rotas existem
+   - Chefe das Ambulâncias: apenas dashboard (OK)
+   - Chefe dos Enfermeiros: apenas dashboard (OK)
+
+**Arquivos Modificados:**
+- `src/config/navigation.ts:124-145` - Removidos links inexistentes
+
+**Decisões Técnicas:**
+- Remover vs Criar → Optado por remover (fora do escopo atual)
+- Links comentados → Facilita implementação futura
+- TODO explícito → Documentação clara do que falta
+
+**Impacto:**
+- ✅ Eliminados erros 404 do console
+- ✅ Menu mais limpo (apenas funcionalidades implementadas)
+- ✅ Performance melhorada (sem prefetch de rotas inexistentes)
+- ✅ Melhor UX (sem links quebrados)
+
+**Quando Implementar:**
+- Funcionalidade "Profissionais" → Descomentar linha 132-137
+- Funcionalidade "Escala" → Descomentar linha 139-144
+- Criar as páginas correspondentes em `src/app/(dashboard)/chefe-medicos/`
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
 ## [0.18.7] - 2025-10-09
 
 ### 🔄 Revertido

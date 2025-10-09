@@ -122,26 +122,27 @@ export const navigationItems: NavigationItem[] = [
     description: 'Gestão de ambulâncias',
   },
   {
-    label: 'Profissionais',
-    href: '/chefe-medicos/profissionais',
-    icon: UserCog,
-    perfis: [TipoPerfil.CHEFE_MEDICOS],
-    description: 'Gestão de profissionais',
-  },
-  {
     label: 'Pacientes',
     href: '/chefe-medicos/pacientes',
     icon: Users,
     perfis: [TipoPerfil.CHEFE_MEDICOS],
     description: 'Banco de dados de pacientes',
   },
-  {
-    label: 'Escala',
-    href: '/chefe-medicos/escala',
-    icon: CalendarDays,
-    perfis: [TipoPerfil.CHEFE_MEDICOS],
-    description: 'Gestão de escala',
-  },
+  // TODO: Adicionar quando implementado
+  // {
+  //   label: 'Profissionais',
+  //   href: '/chefe-medicos/profissionais',
+  //   icon: UserCog,
+  //   perfis: [TipoPerfil.CHEFE_MEDICOS],
+  //   description: 'Gestão de profissionais',
+  // },
+  // {
+  //   label: 'Escala',
+  //   href: '/chefe-medicos/escala',
+  //   icon: CalendarDays,
+  //   perfis: [TipoPerfil.CHEFE_MEDICOS],
+  //   description: 'Gestão de escala',
+  // },
 
   // CHEFE DAS AMBULÂNCIAS
   {
