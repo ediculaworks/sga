@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { Ambulance, Calendar, Gauge, Wrench, DollarSign, Activity } from 'lucide-react';
+import { Ambulance, Calendar, Gauge, Wrench, DollarSign, Activity, ExternalLink } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { Ambulancia, Ocorrencia, GastoAmbulancia } from '@/types';
@@ -27,6 +29,8 @@ export function AmbulanciaDetalhesModal({
   onClose,
   onUpdate,
 }: AmbulanciaDetalhesModalProps) {
+  const router = useRouter();
+
   // Query para buscar dados da ambulância
   const { data: ambulancia, isLoading } = useQuery({
     queryKey: ['ambulancia-detalhes', ambulanciaId],
@@ -157,9 +161,22 @@ export function AmbulanciaDetalhesModal({
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className={getStatusColor(ambulancia.status_ambulancia)}>
-              {getStatusLabel(ambulancia.status_ambulancia)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={getStatusColor(ambulancia.status_ambulancia)}>
+                {getStatusLabel(ambulancia.status_ambulancia)}
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  router.push(`/chefe-ambulancias/ambulancias/${ambulanciaId}`);
+                  onClose();
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Ver Detalhes Completos
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
