@@ -117,6 +117,19 @@ export const criarOcorrenciaSchema = z
       .optional()
       .nullable(),
 
+    // Campos específicos para TRANSFERENCIA
+    local_origem: z
+      .string()
+      .max(255, 'Local de origem não pode ter mais de 255 caracteres')
+      .optional()
+      .nullable(),
+
+    local_destino: z
+      .string()
+      .max(255, 'Local de destino não pode ter mais de 255 caracteres')
+      .optional()
+      .nullable(),
+
     // Descrição
     descricao: z
       .string()
@@ -169,7 +182,7 @@ export const criarOcorrenciaSchema = z
   })
   .refine(
     (data) => {
-      // Validação: horario_termino é obrigatório se tipo_trabalho é EVENTO
+      // Validação: horario_termino é obrigatório APENAS para EVENTO
       if (data.tipo_trabalho === TipoTrabalho.EVENTO && !data.horario_termino) {
         return false;
       }
@@ -178,6 +191,21 @@ export const criarOcorrenciaSchema = z
     {
       message: 'Horário de término é obrigatório para eventos',
       path: ['horario_termino'],
+    }
+  )
+  .refine(
+    (data) => {
+      // Validação: local_origem e local_destino são obrigatórios para TRANSFERENCIA
+      if (data.tipo_trabalho === TipoTrabalho.TRANSFERENCIA) {
+        if (!data.local_origem || !data.local_destino) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Local de origem e destino são obrigatórios para transferências',
+      path: ['local_origem'],
     }
   )
   .refine(

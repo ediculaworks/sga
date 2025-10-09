@@ -270,8 +270,47 @@ export function CriarOcorrenciaForm({
             )}
           </div>
 
-          {/* Horários (Grid 3 colunas) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Campos específicos para TRANSFERENCIA */}
+          {tipoTrabalho === TipoTrabalho.TRANSFERENCIA && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="local_origem">
+                  Local de Origem <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="local_origem"
+                  {...register('local_origem')}
+                  placeholder="Ex: Hospital Municipal"
+                />
+                {errors.local_origem && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.local_origem.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="local_destino">
+                  Local de Destino <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="local_destino"
+                  {...register('local_destino')}
+                  placeholder="Ex: Hospital de Base"
+                />
+                {errors.local_destino && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.local_destino.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Horários (Grid 2 ou 3 colunas dependendo do tipo) */}
+          <div className={`grid grid-cols-1 gap-4 ${tipoTrabalho === TipoTrabalho.EVENTO ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
             <div className="space-y-2">
               <Label htmlFor="horario_saida">
                 Horário de Saída <span className="text-red-500">*</span>
@@ -326,37 +365,35 @@ export function CriarOcorrenciaForm({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="horario_termino">
-                Horário de Término
-                {tipoTrabalho === TipoTrabalho.EVENTO && (
-                  <span className="text-red-500"> *</span>
+            {/* Horário de Término - APENAS para EVENTO */}
+            {tipoTrabalho === TipoTrabalho.EVENTO && (
+              <div className="space-y-2">
+                <Label htmlFor="horario_termino">
+                  Horário de Término <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="horario_termino"
+                  type="text"
+                  {...register('horario_termino')}
+                  placeholder="HH:MM"
+                  maxLength={5}
+                  onInput={(e) => {
+                    let value = e.currentTarget.value.replace(/\D/g, '');
+                    if (value.length >= 3) {
+                      value = value.slice(0, 2) + ':' + value.slice(2, 4);
+                    }
+                    e.currentTarget.value = value;
+                  }}
+                />
+                <p className="text-xs text-gray-500">Digite o horário (ex: 18:00)</p>
+                {errors.horario_termino && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.horario_termino.message}
+                  </p>
                 )}
-              </Label>
-              <Input
-                id="horario_termino"
-                type="text"
-                {...register('horario_termino')}
-                placeholder="HH:MM"
-                maxLength={5}
-                onInput={(e) => {
-                  let value = e.currentTarget.value.replace(/\D/g, '');
-                  if (value.length >= 3) {
-                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
-                  }
-                  e.currentTarget.value = value;
-                }}
-              />
-              <p className="text-xs text-gray-500">
-                {tipoTrabalho === TipoTrabalho.EVENTO ? 'Obrigatório' : 'Opcional'} (ex: 18:00)
-              </p>
-              {errors.horario_termino && (
-                <p className="text-sm text-red-500 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
-                  {errors.horario_termino.message}
-                </p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
