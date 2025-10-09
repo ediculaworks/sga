@@ -30,6 +30,136 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.17.0] - 2025-10-09
+
+### ✅ Adicionado
+
+#### FASE 9.1 - Rastreamento de Ambulâncias em Tempo Real
+
+**Página de Rastreamento** (`src/app/(dashboard)/chefe-medicos/rastreamento/page.tsx`)
+- Página exclusiva do Chefe dos Médicos
+- Layout responsivo com mapa e painel lateral
+- Info card com instruções de uso
+- Proteção de rota (apenas CHEFE_MEDICOS)
+
+**Componente MapaRastreamento** (`src/components/rastreamento/MapaRastreamento.tsx`)
+- **Integração com Mapbox GL JS**
+  - Mapa interativo com controles de navegação
+  - Fullscreen control
+  - Zoom e pan
+  - Estilo: streets-v12
+- **Markers de Ambulâncias Ativas**
+  - Cores por tipo (Vermelho: Emergência | Azul: Básica)
+  - Ícone de ambulância personalizado
+  - Hover effect e animação
+- **Popup Interativo**
+  - Placa, modelo e tipo
+  - Velocidade atual
+  - Ocorrência em andamento
+  - Local da ocorrência
+  - Tempo desde última atualização
+  - Botão "Ver Detalhes" (abre OcorrenciaDetalhesModal)
+- **Funcionalidades**
+  - Clique no marker para abrir popup
+  - Centralização automática ao selecionar ambulância
+  - Legenda de cores
+  - Contador de ambulâncias ativas
+  - Fly-to animation suave
+
+**Componente PainelAmbulancias** (`src/components/rastreamento/PainelAmbulancias.tsx`)
+- Lista vertical de ambulâncias ativas
+- Scroll interno (altura fixa 600px)
+- **Card por Ambulância:**
+  - Placa e modelo
+  - Badge de tipo (Básica/Emergência)
+  - Ocorrência atual (número e local)
+  - Velocidade em tempo real
+  - Tempo desde última atualização
+- **Interatividade:**
+  - Clique no card para selecionar/desselecionar
+  - Destaque visual quando selecionada
+  - Sincronização com mapa (centralização)
+- **Estados de UI:**
+  - Loading state
+  - Empty state (nenhuma ambulância)
+
+**Hook useRastreamentoRealtime** (`src/hooks/useRastreamentoRealtime.ts`)
+- **Supabase Realtime Channel**
+  - Subscribe em `rastreamento_ambulancias`
+  - Escuta eventos: INSERT, UPDATE, DELETE
+  - Invalidação automática da query
+  - Atualização em tempo real (sem refresh manual)
+- **Performance:**
+  - Cleanup automático ao desmontar
+  - Sem memory leaks
+  - Logs de debug no console
+
+**Queries React Query:**
+- `ambulancias-ativas` - Busca ambulâncias com status EM_OPERACAO
+- Join com `ocorrencias` para pegar ocorrência ativa
+- Join com `rastreamento_ambulancias` para coordenadas GPS
+- **Filtragem:**
+  - Apenas ambulâncias com rastreamento ativo
+  - Apenas ocorrências EM_ANDAMENTO ou CONFIRMADA
+- **Cache e Refetch:**
+  - staleTime: 30 segundos
+  - refetchInterval: 30 segundos
+  - Invalidação via Realtime
+
+**Bibliotecas Instaladas:**
+- `mapbox-gl@3.15.0` - Motor de mapas
+- `react-map-gl@8.1.0` - Wrapper React para Mapbox
+- Estilos CSS do Mapbox incluídos
+
+**Configuração:**
+- Variável de ambiente: `NEXT_PUBLIC_MAPBOX_TOKEN`
+- Centro padrão: São Paulo (-23.5505, -46.6333)
+- Zoom padrão: 12
+- Arquivo de instruções: `MAPBOX_SETUP.md`
+
+### 📝 Arquivos Criados
+- `src/app/(dashboard)/chefe-medicos/rastreamento/page.tsx` - Página principal (60 linhas)
+- `src/components/rastreamento/MapaRastreamento.tsx` - Componente de mapa (340 linhas)
+- `src/components/rastreamento/PainelAmbulancias.tsx` - Painel lateral (200 linhas)
+- `src/hooks/useRastreamentoRealtime.ts` - Hook de realtime (30 linhas)
+- `MAPBOX_SETUP.md` - Instruções de configuração
+
+### 🎯 Fluxo Completo Implementado
+
+1. **Chefe dos Médicos acessa** `/chefe-medicos/rastreamento`
+2. **Mapa carrega** com centro em São Paulo
+3. **Markers aparecem** para cada ambulância em operação
+4. **Clique no marker ou card** para ver detalhes
+5. **Popup mostra** informações em tempo real
+6. **Clique "Ver Detalhes"** abre modal da ocorrência
+7. **Atualização automática** a cada 30s + Realtime
+
+### 🔄 Atualização em Tempo Real
+
+- Supabase Realtime subscrito em `rastreamento_ambulancias`
+- Qualquer INSERT/UPDATE/DELETE invalida a query
+- Markers movem suavemente para nova posição
+- Velocidade e localização sempre atualizadas
+- Sem necessidade de refresh manual
+
+### 📋 Próximas Melhorias Sugeridas
+
+- [ ] Histórico de trajeto (linha no mapa)
+- [ ] Estimativa de chegada (ETA)
+- [ ] Filtro por tipo de ambulância
+- [ ] Exportar rotas para análise
+- [ ] Alertas de desvio de rota
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 10.1 - Gestão de Ambulâncias**
+- CRUD de ambulâncias
+- Cadastro de novas ambulâncias
+- Histórico de ocorrências por ambulância
+- Estatísticas e gráficos
+
+---
+
 ## [0.16.0] - 2025-10-09
 
 ### ✅ Adicionado
