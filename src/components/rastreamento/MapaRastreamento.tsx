@@ -9,19 +9,13 @@ import { TipoPerfil } from '@/types';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { useRastreamentoRealtime } from '@/hooks/useRastreamentoRealtime';
 
-// Imports dinâmicos de react-map-gl (apenas client-side)
-import dynamic from 'next/dynamic';
+// Imports diretos de react-map-gl/mapbox (v8+)
+// CORREÇÃO: react-map-gl v8+ requer import do subpath /mapbox ou /maplibre
+import { Map, Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Token do Mapbox (necessário para o Map)
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
-
-// Componentes do Mapbox carregados dinamicamente (apenas no cliente)
-// CORREÇÃO: react-map-gl v8+ requer import do subpath /mapbox ou /maplibre
-const Map = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.Map })), { ssr: false });
-const Marker = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.Marker })), { ssr: false });
-const Popup = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.Popup })), { ssr: false });
-const NavigationControl = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.NavigationControl })), { ssr: false });
-const FullscreenControl = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.FullscreenControl })), { ssr: false });
 
 interface AmbulanciaAtiva {
   id: number;
