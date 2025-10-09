@@ -464,18 +464,30 @@ export const ocorrenciasService = {
       // 4. Verificar se todas as vagas foram preenchidas
       const { data: todasVagas, error: vagasError } = await supabase
         .from('ocorrencias_participantes')
-        .select('confirmado')
+        .select('id, usuario_id, funcao, confirmado')
         .eq('ocorrencia_id', ocorrenciaId);
 
       if (vagasError) {
         console.error('Erro ao verificar vagas:', vagasError);
         // Não falhar aqui, pois a confirmação já foi feita
       } else {
+        console.log(`[DEBUG] Ocorrência ${ocorrenciaId} - Verificando vagas:`, todasVagas);
+
         // 5. Se todas as vagas estiverem confirmadas, mudar status para CONFIRMADA
         const todasConfirmadas = todasVagas?.every((v) => v.confirmado) ?? false;
 
+        console.log(`[DEBUG] Todas confirmadas? ${todasConfirmadas}`);
+        console.log(`[DEBUG] Detalhes das vagas:`, todasVagas?.map(v => ({
+          funcao: v.funcao,
+          confirmado: v.confirmado,
+          usuario_id: v.usuario_id
+        })));
+
         if (todasConfirmadas) {
+          console.log(`[DEBUG] Mudando status para CONFIRMADA`);
           await this.atualizarStatus(ocorrenciaId, StatusOcorrencia.CONFIRMADA);
+        } else {
+          console.log(`[DEBUG] NÃO mudando status - ainda há vagas pendentes`);
         }
       }
 

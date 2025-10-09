@@ -133,33 +133,6 @@ export function useOcorrenciasDisponiveis(
             status: ocorrencia.status_ocorrencia as 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA',
             profissional_confirmado: true,
           });
-        } else if (jaConfirmado && ocorrencia.status_ocorrencia === 'EM_ABERTO') {
-          // Profissional confirmou, mas ocorrência ainda EM_ABERTO (aguardando outros profissionais)
-          // Mostrar em "Disponíveis" com indicador de que já confirmou
-          const vagasParaPerfil = participantes.filter(
-            (p) => p.funcao === tipoPerfil
-          );
-          const totalVagasParaPerfil = vagasParaPerfil.length;
-          const vagasPreenchidas = participantes.filter(
-            (p) => p.funcao === tipoPerfil && p.confirmado === true
-          ).length;
-          const vagasDisponiveis = totalVagasParaPerfil - vagasPreenchidas;
-
-          disponiveis.push({
-            id: ocorrencia.id,
-            numero_ocorrencia: ocorrencia.numero_ocorrencia,
-            tipo_trabalho: ocorrencia.tipo_trabalho,
-            tipo_ambulancia: ocorrencia.tipo_ambulancia,
-            data_ocorrencia: ocorrencia.data_ocorrencia,
-            horario_saida: ocorrencia.horario_saida,
-            horario_no_local: ocorrencia.horario_chegada_local,
-            horario_termino: ocorrencia.horario_termino,
-            local_ocorrencia: ocorrencia.local_ocorrencia,
-            status: ocorrencia.status_ocorrencia as 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA',
-            vagas_disponiveis: vagasDisponiveis,
-            total_vagas: totalVagasParaPerfil,
-            profissional_confirmado: true, // Indicador de que já confirmou
-          });
         } else if (ocorrencia.status_ocorrencia === 'EM_ABERTO') {
           // Ocorrência em aberto - verificar se há vagas para este perfil
 
