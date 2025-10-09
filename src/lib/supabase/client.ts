@@ -1,18 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
-
 /**
- * Cliente Supabase para uso no lado do cliente (Client Components)
+ * Cliente Supabase para uso no navegador (Client Components)
  *
- * IMPORTANTE: Este cliente usa variáveis de ambiente públicas (NEXT_PUBLIC_*)
- * que são expostas ao navegador. Não coloque segredos aqui.
+ * CORREÇÃO v0.18.13: Usar cookies ao invés de localStorage
  *
- * Para operações do lado do servidor, use o cliente server.ts
+ * O middleware do Next.js precisa ler cookies para validar a sessão.
+ * localStorage não é acessível no servidor, causando loop de redirecionamento.
  *
- * CORREÇÕES:
- * - Configuração otimizada para Safari/Mac
- * - Refresh automático de sessão
- * - Persistência melhorada
+ * Usa @supabase/ssr para gerenciar cookies automaticamente.
  */
+
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -23,39 +20,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // Configurações otimizadas para Safari e Mac
-    autoRefreshToken: true, // Refresh automático do token
-    persistSession: true, // Manter sessão entre reloads
-    detectSessionInUrl: true, // Detectar sessão na URL
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'sga-auth-token', // Chave customizada
-    // Reduzir tempo de detecção de sessão inválida
-    flowType: 'pkce', // Mais seguro e compatível com Safari
-  },
-  global: {
-    headers: {
-      'x-application-name': 'sga',
-    },
-    fetch: (url, options = {}) => {
-      // Aumentar timeout para 30 segundos
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      return fetch(url, {
-        ...options,
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-    },
-  },
-  // Configuração de network para Safari
-  realtime: {
-    params: {
-      eventsPerSecond: 2,
-    },
-  },
-  db: {
-    schema: 'public',
-  },
-});
+/**
+ * Cliente Supabase configurado para usar cookies via @supabase/ssr
+ *
+ * Os cookies são automaticamente gerenciados e compartilhados entre:
+ * - Client Components (navegador)
+ * - Server Components (Next.js)
+ * - Middleware (validação de autenticação)
+ *
+ * IMPORTANTE: Isso substitui a configuração anterior que usava localStorage.
+ * Cookies são necessários para o middleware funcionar corretamente no Vercel.
+ */
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
