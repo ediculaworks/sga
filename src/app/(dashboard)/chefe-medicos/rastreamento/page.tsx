@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { MapaRastreamento } from '@/components/rastreamento/MapaRastreamento';
 import { PainelAmbulancias } from '@/components/rastreamento/PainelAmbulancias';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+// ProtectedRoute removido - autenticação agora é feita via middleware
 import { TipoPerfil } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function RastreamentoPage() {
   const [ambulanciaSelecionada, setAmbulanciaSelecionada] = useState<number | null>(null);
 
   return (
-    <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
+    
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>
@@ -60,6 +60,6 @@ export default function RastreamentoPage() {
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    
   );
 }

@@ -30,6 +30,162 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.9] - 2025-10-09
+
+### 🔧 Modificado
+
+**Migração de Autenticação: ProtectedRoute → Middleware**
+
+**Contexto:**
+- Após reversão da v0.18.7, autenticação voltou a funcionar normalmente
+- Porém, loop de "Verificando permissões..." indicava problema arquitetural
+- ProtectedRoute validando permissões no client-side (após renderização)
+- Next.js 14 recomenda autenticação no middleware (server-side)
+
+**Decisão Tomada:**
+Implementar **middleware de autenticação** seguindo padrão oficial do Supabase SSR + Next.js 14
+
+**Mudanças Implementadas:**
+
+1. **Instalação de Dependência Correta**
+   - Desinstalado: `@supabase/auth-helpers-nextjs` (deprecated)
+   - Instalado: `@supabase/ssr@latest` (oficial para SSR)
+   - Suporte completo a Server Components e Middleware
+
+2. **Criação do Middleware** (`src/middleware.ts`)
+   - Intercepta TODAS as requisições antes de renderizar
+   - Rotas públicas permitidas: `/login`, `/cadastro`, `/api/*`, `/_next/*`
+   - Validação de sessão com `supabase.auth.getSession()`
+   - **Redirecionamento automático:**
+     - Sem autenticação → `/login`
+     - Sem permissão → `/login?error=unauthorized`
+   - **Validação de perfil:**
+     - Query em `usuarios` para buscar `tipo_perfil`
+     - Checagem de permissão por rota
+     - Redirecionamento para dashboard correto se acessar rota inválida
+   - **Configuração:**
+     - Matcher: `/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)`
+     - Exclui arquivos estáticos automaticamente
+
+3. **Remoção de ProtectedRoute** (6 páginas)
+   - `src/app/(dashboard)/medico/page.tsx`
+   - `src/app/(dashboard)/enfermeiro/page.tsx`
+   - `src/app/(dashboard)/chefe-medicos/page.tsx`
+   - `src/app/(dashboard)/chefe-medicos/ambulancias/page.tsx`
+   - `src/app/(dashboard)/chefe-medicos/central-despacho/page.tsx`
+   - `src/app/(dashboard)/chefe-medicos/ocorrencias/page.tsx`
+   - `src/app/(dashboard)/chefe-medicos/rastreamento/page.tsx`
+   - **Ação:** Removido wrapper `<ProtectedRoute>` de todas as páginas
+   - **Motivo:** Middleware já valida antes de renderizar (não precisa validar de novo)
+   - **Resultado:** Páginas retornam diretamente o componente principal
+
+4. **Limpeza de Estrutura JSX**
+   - Removidos fragments vazios deixados pela remoção
+   - Funções export simplificadas:
+     ```typescript
+     // ANTES:
+     export default function Page() {
+       return (
+         <ProtectedRoute allowedProfiles={[TipoPerfil.MEDICO]}>
+           <Content />
+         </ProtectedRoute>
+       );
+     }
+
+     // DEPOIS:
+     export default function Page() {
+       return <Content />;
+     }
+     ```
+
+5. **Comentários Documentados**
+   - Adicionado em todas as páginas: `// ProtectedRoute removido - autenticação agora é feita via middleware`
+   - Facilita compreensão futura da arquitetura
+
+**Arquivos Criados:**
+- `src/middleware.ts` - Middleware de autenticação (150 linhas)
+
+**Arquivos Modificados:**
+- `src/app/(dashboard)/medico/page.tsx` - Removido ProtectedRoute
+- `src/app/(dashboard)/enfermeiro/page.tsx` - Removido ProtectedRoute
+- `src/app/(dashboard)/chefe-medicos/page.tsx` - Removido ProtectedRoute
+- `src/app/(dashboard)/chefe-medicos/ambulancias/page.tsx` - Removido ProtectedRoute
+- `src/app/(dashboard)/chefe-medicos/central-despacho/page.tsx` - Removido ProtectedRoute
+- `src/app/(dashboard)/chefe-medicos/ocorrencias/page.tsx` - Removido ProtectedRoute
+- `src/app/(dashboard)/chefe-medicos/rastreamento/page.tsx` - Removido ProtectedRoute
+- `package.json` - Atualizado dependências
+
+**Decisões Técnicas:**
+- Middleware vs ProtectedRoute → Middleware previne renderização desnecessária
+- @supabase/ssr → Biblioteca oficial, sem deprecation
+- Server-side auth check → Melhor segurança e performance
+- Manter ProtectedRoute.tsx → Pode ser útil para validações extras no futuro (comentado)
+
+**Vantagens da Nova Arquitetura:**
+
+✅ **Performance:**
+- Validação acontece ANTES de renderizar componentes
+- Sem re-renders causados por hooks de autenticação
+- Redirecionamento server-side (mais rápido)
+
+✅ **Segurança:**
+- Rotas protegidas a nível de servidor
+- Impossível bypassar checagem no client-side
+- Session token validado em cada request
+
+✅ **UX:**
+- Eliminado completamente o "Verificando permissões..."
+- Redirecionamento instantâneo se não autenticado
+- Páginas só renderizam se usuário tem permissão
+
+✅ **Manutenibilidade:**
+- Validação centralizada em 1 arquivo
+- Não precisa envolver cada página com ProtectedRoute
+- Fácil adicionar novas rotas protegidas
+
+**Fluxo Completo:**
+```
+1. Usuário acessa /medico
+   ↓
+2. Middleware intercepta requisição
+   ↓
+3. Verifica sessão no Supabase
+   ↓
+4. Se não autenticado → redirect /login
+   ↓
+5. Se autenticado, busca perfil do usuário
+   ↓
+6. Verifica se perfil pode acessar /medico
+   ↓
+7. Se SIM → Renderiza página normalmente
+   Se NÃO → redirect /login?error=unauthorized
+```
+
+**Testes Realizados:**
+- ✅ Compilação TypeScript sem erros (`npx tsc --noEmit`)
+- ✅ Todas as páginas sem ProtectedRoute
+- ✅ Middleware configurado corretamente
+- ✅ Estrutura JSX limpa e válida
+
+**Impacto:**
+- ✅ **ELIMINADO** loop de "Verificando permissões..."
+- ✅ Autenticação mais rápida e segura
+- ✅ Código mais limpo (7 arquivos simplificados)
+- ✅ Conformidade com Next.js 14 App Router
+- ✅ Melhor developer experience
+
+### ⏭️ Próximo Passo
+
+**Sistema de autenticação agora está robusto e performático!**
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
 ## [0.18.8] - 2025-10-09
 
 ### 🐛 Corrigido

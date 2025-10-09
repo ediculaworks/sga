@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+// ProtectedRoute removido - autenticação agora é feita via middleware
 import { TipoPerfil, type StatusAmbulancia } from '@/types';
 import { ambulanciasService } from '@/lib/services/ambulancias';
 import { AmbulanciaCard } from '@/components/ambulancias/AmbulanciaCard';
@@ -63,8 +63,7 @@ export default function AmbulanciasPage() {
   };
 
   return (
-    <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -175,7 +174,6 @@ export default function AmbulanciasPage() {
             )}
           </>
         )}
-      </div>
 
       {/* Modal de Cadastro */}
       <CadastrarAmbulanciaModal
@@ -183,6 +181,6 @@ export default function AmbulanciasPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={refetch}
       />
-    </ProtectedRoute>
+    </div>
   );
 }

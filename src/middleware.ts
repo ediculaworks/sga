@@ -1,177 +1,172 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { TipoPerfil } from '@/types';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 /**
- * Middleware de Proteção de Rotas
+ * Middleware de Autenticação
  *
- * Este middleware protege as rotas do dashboard, verificando:
- * 1. Se o usuário está autenticado
- * 2. Se o usuário tem permissão para acessar a rota (baseado no perfil)
+ * Verifica autenticação e permissões antes de cada requisição.
+ * Redireciona usuários não autenticados ou sem permissão.
  *
- * Rotas protegidas:
- * - /medico/* - Apenas MEDICO
- * - /enfermeiro/* - Apenas ENFERMEIRO
- * - /motorista/* - Apenas MOTORISTA
- * - /chefe-medicos/* - Apenas CHEFE_MEDICOS
- * - /chefe-enfermeiros/* - Apenas CHEFE_ENFERMEIROS
- * - /chefe-ambulancias/* - Apenas CHEFE_AMBULANCIAS
+ * NOVA ABORDAGEM: Middleware ao invés de ProtectedRoute
+ * - Mais performático (sem re-renders)
+ * - Recomendado pelo Next.js 14
+ * - Evita loops infinitos
  */
 
-/**
- * Mapa de rotas para perfis permitidos
- */
-const ROUTE_PERMISSIONS: Record<string, TipoPerfil[]> = {
-  '/medico': [TipoPerfil.MEDICO],
-  '/enfermeiro': [TipoPerfil.ENFERMEIRO],
-  '/motorista': [TipoPerfil.MOTORISTA],
-  '/chefe-medicos': [TipoPerfil.CHEFE_MEDICOS],
-  '/chefe-enfermeiros': [TipoPerfil.CHEFE_ENFERMEIROS],
-  '/chefe-ambulancias': [TipoPerfil.CHEFE_AMBULANCIAS],
+// Rotas públicas (não precisam de autenticação)
+const PUBLIC_ROUTES = ['/login', '/setup'];
+
+// Mapa de rotas e perfis permitidos
+const ROUTE_PERMISSIONS: Record<string, string[]> = {
+  '/medico': ['MEDICO'],
+  '/enfermeiro': ['ENFERMEIRO'],
+  '/motorista': ['MOTORISTA'],
+  '/chefe-medicos': ['CHEFE_MEDICOS'],
+  '/chefe-enfermeiros': ['CHEFE_ENFERMEIROS'],
+  '/chefe-ambulancias': ['CHEFE_AMBULANCIAS'],
 };
 
-/**
- * Retorna a rota do dashboard baseado no perfil
- */
-function getDashboardRoute(perfil: TipoPerfil): string {
-  const routes: Record<TipoPerfil, string> = {
-    [TipoPerfil.MEDICO]: '/medico',
-    [TipoPerfil.ENFERMEIRO]: '/enfermeiro',
-    [TipoPerfil.MOTORISTA]: '/motorista',
-    [TipoPerfil.CHEFE_MEDICOS]: '/chefe-medicos',
-    [TipoPerfil.CHEFE_ENFERMEIROS]: '/chefe-enfermeiros',
-    [TipoPerfil.CHEFE_AMBULANCIAS]: '/chefe-ambulancias',
-  };
-  return routes[perfil] || '/login';
-}
+// Dashboard padrão por perfil
+const DASHBOARD_BY_PROFILE: Record<string, string> = {
+  MEDICO: '/medico',
+  ENFERMEIRO: '/enfermeiro',
+  MOTORISTA: '/motorista',
+  CHEFE_MEDICOS: '/chefe-medicos',
+  CHEFE_ENFERMEIROS: '/chefe-enfermeiros',
+  CHEFE_AMBULANCIAS: '/chefe-ambulancias',
+};
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  console.log('[MIDDLEWARE] Pathname:', pathname);
 
-  // Lista de rotas protegidas (dashboards)
-  const protectedRoutes = Object.keys(ROUTE_PERMISSIONS);
-
-  // Verificar se a rota atual é protegida
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  console.log('[MIDDLEWARE] Is protected route:', isProtectedRoute);
-
-  // Se não for rota protegida, permitir acesso
-  if (!isProtectedRoute) {
+  // Permitir rotas públicas
+  if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
+  // Permitir assets estáticos e API
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/favicon') ||
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)
+  ) {
+    return NextResponse.next();
+  }
+
+  // Criar response
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  try {
-    // Criar cliente Supabase usando @supabase/ssr
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              request.cookies.set(name, value)
-            );
-            response = NextResponse.next({
-              request,
-            });
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            );
-          },
+  // Criar cliente Supabase com SSR
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
         },
-      }
-    );
-
-    // Verificar sessão
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-
-    console.log('[MIDDLEWARE] Session:', session ? 'exists' : 'null', 'Error:', error);
-
-    // Se não houver sessão válida, redirecionar para login
-    if (error || !session) {
-      console.log('[MIDDLEWARE] Sem sessão, redirecionando para login');
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+        },
+      },
     }
+  );
 
-    // Buscar dados do usuário para verificar perfil
-    const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('tipo_perfil')
-      .eq('email', session.user.email)
-      .single();
+  // Verificar sessão
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-    console.log('[MIDDLEWARE] User data:', userData, 'Error:', userError);
-
-    if (userError || !userData) {
-      console.log('[MIDDLEWARE] Erro ao buscar usuário, redirecionando para login');
-      const loginUrl = new URL('/login', request.url);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Verificar permissão de acesso baseado no perfil
-    const userProfile = userData.tipo_perfil as TipoPerfil;
-    const currentRoute = protectedRoutes.find((route) => pathname.startsWith(route));
-
-    console.log('[MIDDLEWARE] User profile:', userProfile, 'Current route:', currentRoute);
-
-    if (currentRoute) {
-      const allowedProfiles = ROUTE_PERMISSIONS[currentRoute];
-
-      // Se o usuário não tem permissão, redirecionar para seu dashboard
-      if (!allowedProfiles.includes(userProfile)) {
-        console.log('[MIDDLEWARE] Sem permissão, redirecionando para dashboard correto');
-        const dashboardUrl = new URL(getDashboardRoute(userProfile), request.url);
-        return NextResponse.redirect(dashboardUrl);
-      }
-    }
-
-    console.log('[MIDDLEWARE] Permissão OK, permitindo acesso');
-    // Sessão válida e permissão OK, permitir acesso
-    return response;
-  } catch (error) {
-    console.error('[MIDDLEWARE] Erro no middleware de autenticação:', error);
-
-    // Em caso de erro, redirecionar para login por segurança
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  // Se não estiver autenticado, redirecionar para login
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
+
+  // Buscar dados do usuário do localStorage (cache)
+  // Se não houver, buscar do banco
+  const { data: userData, error } = await supabase
+    .from('usuarios')
+    .select('tipo_perfil')
+    .eq('email', session.user.email)
+    .single();
+
+  if (error || !userData) {
+    console.error('[Middleware] Erro ao buscar usuário:', error);
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  const userProfile = userData.tipo_perfil;
+
+  // Verificar permissões para a rota
+  for (const [routePrefix, allowedProfiles] of Object.entries(ROUTE_PERMISSIONS)) {
+    if (pathname.startsWith(routePrefix)) {
+      if (!allowedProfiles.includes(userProfile)) {
+        // Usuário não tem permissão, redirecionar para seu dashboard
+        const userDashboard = DASHBOARD_BY_PROFILE[userProfile] || '/login';
+        return NextResponse.redirect(new URL(userDashboard, request.url));
+      }
+      // Tem permissão, continuar
+      return response;
+    }
+  }
+
+  // Rota raiz, redirecionar para dashboard do usuário
+  if (pathname === '/') {
+    const userDashboard = DASHBOARD_BY_PROFILE[userProfile] || '/login';
+    return NextResponse.redirect(new URL(userDashboard, request.url));
+  }
+
+  // Outras rotas, permitir
+  return response;
 }
 
-/**
- * Configuração do middleware
- * Define em quais rotas o middleware deve ser executado
- */
+// Configurar quais rotas o middleware deve processar
 export const config = {
   matcher: [
     /*
-     * TEMPORARIAMENTE DESABILITADO - Ajustando fluxo de autenticação
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - login (login page)
+     * - public folder
      */
-    // '/((?!api|_next/static|_next/image|favicon.ico|login).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

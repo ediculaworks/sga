@@ -5,7 +5,7 @@ import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+// ProtectedRoute removido - autenticação agora é feita via middleware
 import { OcorrenciasTable } from '@/components/ocorrencias/OcorrenciasTable';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { ocorrenciasService } from '@/lib/services/ocorrencias';
@@ -44,7 +44,7 @@ export default function OcorrenciasPage() {
   };
 
   return (
-    <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
+    
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -87,6 +87,6 @@ export default function OcorrenciasPage() {
           />
         )}
       </div>
-    </ProtectedRoute>
+    
   );
 }

@@ -18,7 +18,7 @@ import {
   CreditCard,
   Package,
 } from 'lucide-react';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+// ProtectedRoute removido - autenticação agora é feita via middleware
 import { TipoPerfil } from '@/types';
 
 /**
@@ -79,7 +79,7 @@ export default function ChefeMedicosDashboard() {
   };
 
   return (
-    <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
+    
       <div className="space-y-6">
         {/* Header com botão de ação */}
         <div className="flex items-center justify-between">
@@ -219,6 +219,6 @@ export default function ChefeMedicosDashboard() {
           </Card>
         )}
       </div>
-    </ProtectedRoute>
+    
   );
 }

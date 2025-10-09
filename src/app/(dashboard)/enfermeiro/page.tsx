@@ -8,7 +8,7 @@ import { OcorrenciaCard } from '@/components/ocorrencias/OcorrenciaCard';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+// ProtectedRoute removido - autenticação agora é feita via middleware
 import { ocorrenciasService } from '@/lib/services/ocorrencias';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -310,9 +310,5 @@ function EnfermeiroDashboardContent() {
 }
 
 export default function EnfermeiroDashboard() {
-  return (
-    <ProtectedRoute allowedProfiles={[TipoPerfil.ENFERMEIRO]}>
-      <EnfermeiroDashboardContent />
-    </ProtectedRoute>
-  );
+  return <EnfermeiroDashboardContent />;
 }

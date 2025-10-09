@@ -8,7 +8,7 @@ import { OcorrenciaCard } from '@/components/ocorrencias/OcorrenciaCard';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+// ProtectedRoute removido - autenticação agora é feita via middleware
 import { ocorrenciasService } from '@/lib/services/ocorrencias';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -301,10 +301,7 @@ function MedicoDashboardContent() {
   );
 }
 
+// Middleware cuida da autenticação automaticamente
 export default function MedicoDashboard() {
-  return (
-    <ProtectedRoute allowedProfiles={[TipoPerfil.MEDICO]}>
-      <MedicoDashboardContent />
-    </ProtectedRoute>
-  );
+  return <MedicoDashboardContent />;
 }
