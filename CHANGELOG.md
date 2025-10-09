@@ -34,7 +34,39 @@ Descrição clara e concisa da mudança.
 
 ### 🐛 Corrigido
 
-**1. Visualização de Pagamentos no Modal de Detalhes**
+**1. Visualização de Informações Cortadas no Modal (Revisão do Erro 2)**
+
+**Problema:**
+- Após remover overflow horizontal, informações estavam sendo cortadas
+- Usuário não conseguia visualizar todo o conteúdo dentro do modal
+- Textos longos não quebravam corretamente dentro dos containers
+- Layout não estava responsivo para conteúdo extenso
+
+**Solução:**
+- Adicionar `w-full` e `overflow-hidden` no container principal (space-y-6)
+- Envolver descrição em `<div>` separada com `overflow-hidden`
+- Usar `whitespace-pre-wrap` e `break-words` na descrição
+- Adicionar `flex-1 min-w-0` nos participantes para permitir truncate correto
+- Adicionar `flex-shrink-0` nos badges de status para evitar compressão
+- Garantir `w-full` em todos os containers de texto longo
+
+**Arquivos:**
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:454` - Container principal
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:498-507` - Estrutura descrição
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:511` - Container local
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx:637-660` - Cards participantes
+
+**Resultado:**
+- ✅ Todas as informações visíveis dentro do modal
+- ✅ Textos longos quebram automaticamente sem cortar conteúdo
+- ✅ Layout responsivo sem overflow horizontal
+- ✅ Nenhuma informação cortada ou inacessível
+
+**Commit:** `4f2d528`
+
+---
+
+**2. Visualização de Pagamentos no Modal de Detalhes**
 
 **Problema:**
 - Enfermeiros e médicos visualizavam pagamentos de TODOS os profissionais da mesma função
