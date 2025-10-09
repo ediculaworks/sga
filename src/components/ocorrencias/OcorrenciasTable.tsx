@@ -32,23 +32,21 @@ import { Badge } from '@/components/ui/badge';
 /**
  * Mapa de cores para status de ocorrência
  */
-const STATUS_COLORS: Record<StatusOcorrencia, string> = {
+const STATUS_COLORS: Partial<Record<StatusOcorrencia, string>> = {
   [StatusOcorrencia.EM_ABERTO]: 'bg-yellow-500',
   [StatusOcorrencia.CONFIRMADA]: 'bg-blue-500',
   [StatusOcorrencia.EM_ANDAMENTO]: 'bg-green-500',
   [StatusOcorrencia.CONCLUIDA]: 'bg-gray-500',
-  [StatusOcorrencia.CANCELADA]: 'bg-red-500',
 };
 
 /**
  * Mapa de labels para status
  */
-const STATUS_LABELS: Record<StatusOcorrencia, string> = {
+const STATUS_LABELS: Partial<Record<StatusOcorrencia, string>> = {
   [StatusOcorrencia.EM_ABERTO]: 'Em Aberto',
   [StatusOcorrencia.CONFIRMADA]: 'Confirmada',
   [StatusOcorrencia.EM_ANDAMENTO]: 'Em Andamento',
   [StatusOcorrencia.CONCLUIDA]: 'Concluída',
-  [StatusOcorrencia.CANCELADA]: 'Cancelada',
 };
 
 /**
@@ -104,7 +102,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
   });
 
   /**
-   * Ordenar ocorrências: EM_ANDAMENTO → CONFIRMADA → EM_ABERTO → CONCLUIDA/CANCELADA
+   * Ordenar ocorrências: EM_ANDAMENTO → CONFIRMADA → EM_ABERTO → CONCLUIDA
    */
   const ocorrencias = ocorrenciasRaw?.sort((a, b) => {
     const prioridades: Record<StatusOcorrencia, number> = {
@@ -112,7 +110,6 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
       [StatusOcorrencia.CONFIRMADA]: 2,
       [StatusOcorrencia.EM_ABERTO]: 3,
       [StatusOcorrencia.CONCLUIDA]: 4,
-      [StatusOcorrencia.CANCELADA]: 5,
     };
 
     const prioridadeA = prioridades[a.status_ocorrencia] || 999;
@@ -236,7 +233,6 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
             <SelectItem value={StatusOcorrencia.CONFIRMADA}>Confirmada</SelectItem>
             <SelectItem value={StatusOcorrencia.EM_ANDAMENTO}>Em Andamento</SelectItem>
             <SelectItem value={StatusOcorrencia.CONCLUIDA}>Concluída</SelectItem>
-            <SelectItem value={StatusOcorrencia.CANCELADA}>Cancelada</SelectItem>
           </SelectContent>
         </Select>
 
