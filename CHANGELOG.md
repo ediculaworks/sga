@@ -34,7 +34,54 @@ Descrição clara e concisa da mudança.
 
 ### 🐛 Corrigido
 
-**1. Inscrição Duplicada em Ocorrências (Novo Bug Criado - CORRIGIDO)**
+**1. Ocorrência Sumindo Após Confirmação (Erro 3 - RESOLVIDO DEFINITIVAMENTE)**
+
+**Problema Reportado:**
+- Médico confirmava participação → Ocorrência SUMIA do dashboard
+- Só aparecia após outro profissional se inscrever
+- Quando aparecia, badge mostrava "Confirmada" ao invés de "Em Aberto"
+- Sistema não respeitava regra: só mudar para CONFIRMADA quando TODAS vagas preenchidas
+
+**Regra Correta do Sistema:**
+1. Profissional confirma → Aparece em "Minhas Ocorrências Confirmadas"
+2. Badge mostra **status REAL** da ocorrência do banco:
+   - "Em Aberto" = Ainda faltam vagas a preencher
+   - "Confirmada" = TODAS as vagas preenchidas por profissionais diferentes
+3. Badge verde "Confirmado" = Indica que o profissional confirmou sua participação
+
+**Exemplo (1 médico + 3 enfermeiros = 4 vagas):**
+- Médico confirma → "Minhas Confirmadas" + badge "Em Aberto" (faltam 3)
+- Enfermeiro 1 confirma → "Minhas Confirmadas" + badge "Em Aberto" (faltam 2)
+- Enfermeiro 2 confirma → "Minhas Confirmadas" + badge "Em Aberto" (falta 1)
+- Enfermeiro 3 confirma → "Minhas Confirmadas" + badge "Confirmada" ✅
+
+**Causa Raiz:**
+- Hook tinha condição: `jaConfirmado && status === 'CONFIRMADA'`
+- Só mostrava ocorrência quando status do banco já era CONFIRMADA
+- Médico confirmava mas não via (status ainda EM_ABERTO)
+- Após segundo profissional, lógica mudava status incorretamente
+
+**Solução:**
+- Remover validação de status da condição
+- Se profissional confirmou (`jaConfirmado`), **sempre** mostrar em "Confirmadas"
+- Manter status REAL do banco: `ocorrencia.status_ocorrencia`
+- OcorrenciaCard já exibe badge correto baseado no status real
+
+**Arquivos:**
+- `src/hooks/useOcorrenciasDisponiveis.ts:121-137` - Condição simplificada
+
+**Resultado:**
+- ✅ Profissional vê ocorrência IMEDIATAMENTE após confirmar
+- ✅ Badge mostra status real (Em Aberto até todas vagas preenchidas)
+- ✅ Badge verde "Confirmado" mostra participação individual
+- ✅ Status só muda para CONFIRMADA quando 100% das vagas preenchidas
+- ✅ Lógica do backend (every confirmado) está correta
+
+**Commit:** `8e9dfd9`
+
+---
+
+**2. Inscrição Duplicada em Ocorrências (Novo Bug Criado - CORRIGIDO)**
 
 **Problema:**
 - Após correção anterior do Erro 3, criei um novo bug
