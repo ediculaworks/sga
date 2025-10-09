@@ -30,6 +30,194 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.13] - 2025-10-09
+
+### 🐛 Corrigido
+
+**BUG CRÍTICO: Loop de Redirecionamento após Login no Vercel**
+
+**Contexto:**
+- Branch `teste1` criada para testar hipótese de carregamento lento
+- Durante testes, encontrados múltiplos erros derivados
+
+**Problema Reportado:**
+- Após login com sucesso no Vercel, usuário era redirecionado de volta para `/login`
+- Loop infinito: login → dashboard → login → dashboard...
+- Funcionava localmente mas quebrava em produção (Vercel)
+
+**Causa Raiz Identificada:**
+
+**1. localStorage vs Cookies (PRINCIPAL)**
+   - Supabase client usava `localStorage` para armazenar sessão (linha 32 de `client.ts`)
+   - Middleware precisava ler **cookies** para validar autenticação
+   - localStorage NÃO é acessível no servidor/middleware
+   - Resultado: Middleware nunca via a sessão → redirecionava para /login
+
+**2. react-map-gl Build Error**
+   - `react-map-gl` v8+ não exporta pelo caminho raiz
+   - Package.json exports apenas `/mapbox`, `/maplibre`, `/mapbox-legacy`
+   - Imports dinâmicos falhando no Vercel
+
+**Solução Implementada:**
+
+**1. Substituição Completa do Supabase Client** (`src/lib/supabase/client.ts`)
+   - **ANTES (QUEBRADO):**
+     ```typescript
+     import { createClient } from '@supabase/supabase-js';
+     export const supabase = createClient(url, key, {
+       auth: {
+         storage: window.localStorage, // ❌ Não acessível no middleware!
+         storageKey: 'sga-auth-token',
+       }
+     });
+     ```
+   - **DEPOIS (FUNCIONAL):**
+     ```typescript
+     import { createBrowserClient } from '@supabase/ssr';
+     export const supabase = createBrowserClient(url, key);
+     // ✅ Usa cookies automaticamente!
+     ```
+   - `createBrowserClient` do `@supabase/ssr` gerencia cookies automaticamente
+   - Cookies compartilhados entre client, server e middleware
+   - Middleware agora vê a sessão após login
+
+**2. Correção de Imports do react-map-gl**
+   - Arquivo de tipos: `react-map-gl.d.ts` alterado de `'react-map-gl'` para `'react-map-gl/mapbox'`
+   - Imports dinâmicos simplificados para imports diretos:
+     ```typescript
+     import { Map, Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
+     ```
+   - Componente já usa `'use client'`, então dynamic() não era necessário
+
+**3. Redirecionamento após Login** (`src/app/(auth)/login/page.tsx`)
+   - Alterado de `router.push()` para `window.location.href`
+   - `router.push()` é assíncrono e não aguarda sessão propagar
+   - `window.location.href` força reload completo com sessão já disponível
+
+**4. Logs de Debug**
+   - Adicionados logs no middleware e auth service
+   - Facilita diagnóstico de problemas futuros
+   - Podem ser removidos após estabilização
+
+**Arquivos Modificados:**
+- `src/lib/supabase/client.ts` - Substituído por createBrowserClient (46 linhas removidas, 19 adicionadas)
+- `src/types/react-map-gl.d.ts` - Alterado module declaration para /mapbox
+- `src/components/rastreamento/MapaRastreamento.tsx` - Imports diretos ao invés de dynamic
+- `src/app/(auth)/login/page.tsx` - window.location.href ao invés de router.push
+- `src/middleware.ts` - Logs de debug adicionados
+- `src/lib/services/auth.ts` - Logs de debug adicionados
+- `.claude/commands/teste.md` - Criado comando /teste para debug iterativo
+
+**Decisões Técnicas:**
+- createBrowserClient vs createClient → Cookies necessários para middleware
+- Imports diretos vs dynamic() → Componente 'use client' não precisa de dynamic
+- window.location.href vs router.push → Garante propagação completa da sessão
+- Logs detalhados → Troubleshooting de problemas de autenticação
+
+**Fluxo Corrigido:**
+```
+ANTES (QUEBRADO):
+1. Login bem-sucedido → Sessão salva no localStorage ✅
+2. router.push('/medico') → Navegação assíncrona
+3. Middleware executa → Tenta ler cookies
+4. Cookies não existem → Sessão em localStorage inacessível ❌
+5. Redirect para /login → Loop infinito ♻️
+
+AGORA (FUNCIONAL):
+1. Login bem-sucedido → Sessão salva em COOKIES ✅
+2. window.location.href = '/medico' → Reload completo
+3. Middleware executa → Lê cookies com sessão ✅
+4. Sessão válida encontrada → Permite acesso
+5. Dashboard renderiza corretamente ✅
+```
+
+**Impacto:**
+- ✅ **RESOLVIDO** loop de redirecionamento no Vercel
+- ✅ Autenticação funciona em local E produção
+- ✅ Middleware reconhece sessão corretamente
+- ✅ Build do react-map-gl passa sem erros
+- ⚠️ Usuários precisam fazer login novamente (sessões antigas em localStorage)
+
+**Testes Realizados:**
+- ✅ Build local compilou com sucesso (3x)
+- ✅ Login funcionando no Vercel
+- ✅ Redirecionamento para dashboard correto
+- ✅ Navegação entre páginas sem loops
+- ✅ Logout e novo login funcionando
+
+**Observação Importante:**
+Usuários que já fizeram login anteriormente precisarão fazer login novamente porque:
+- Sessões antigas estavam no localStorage
+- Novas sessões serão em cookies
+- Não há migração automática (comportamento esperado)
+
+### ⚡ Otimizações de Performance (Hipótese 1)
+
+**Problema Original do /teste:**
+- Dashboard demorando para carregar
+- Possíveis re-fetches desnecessários
+
+**Solução Implementada:**
+
+**1. Otimização de Queries React Query** (`src/hooks/useMedicoStats.ts`)
+   - **ocorrenciasAtendidas:**
+     - staleTime: 3 minutos
+     - gcTime: 10 minutos
+     - refetchOnWindowFocus: false
+     - refetchOnMount: false
+   - **pagamentos:**
+     - staleTime: 5 minutos (dados mudam menos)
+     - gcTime: 15 minutos
+     - refetchOnWindowFocus: false
+     - refetchOnMount: false
+   - **remocoes:**
+     - staleTime: 3 minutos
+     - gcTime: 10 minutos
+     - refetchOnWindowFocus: false
+     - refetchOnMount: false
+
+**2. Otimização de useOcorrenciasDisponiveis** (`src/hooks/useOcorrenciasDisponiveis.ts`)
+   - staleTime reduzido de 5min para 3min
+   - refetchOnWindowFocus: false
+   - refetchOnMount: false
+   - retry: 2 (ao invés de 3)
+   - retryDelay: 1000ms
+
+**3. Memoização de Handlers** (`src/app/(dashboard)/enfermeiro/page.tsx`)
+   - `handleVerDetalhes` com useCallback
+   - `handleCloseModal` com useCallback
+   - `handleConfirmarParticipacao` com useCallback e dependências corretas
+   - Previne re-renders desnecessários de OcorrenciaCard
+
+**Arquivos Modificados:**
+- `src/hooks/useMedicoStats.ts` - +12 linhas de configuração de cache
+- `src/hooks/useOcorrenciasDisponiveis.ts` - +8 linhas de otimização
+- `src/app/(dashboard)/enfermeiro/page.tsx` - Handlers memoizados
+
+**Impacto:**
+- ✅ Dashboard carrega mais rápido
+- ✅ Menos requisições desnecessárias ao Supabase
+- ✅ Cache inteligente (dados frescos por mais tempo)
+- ✅ Re-renders minimizados
+
+**Resultado do /teste:**
+- ✅ Hipótese 1 confirmada como correta
+- ✅ Carregamento lento resolvido
+- ✅ Merge de teste1 → dev concluído
+
+### ⏭️ Próximo Passo
+
+**Sistema de autenticação agora está 100% funcional em local e produção!**
+**Performance otimizada com cache inteligente!**
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
 ## [0.18.11] - 2025-10-09
 
 ### 🐛 Corrigido
