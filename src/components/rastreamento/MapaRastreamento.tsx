@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Map, { Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl';
-import mapboxgl from 'mapbox-gl';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { Ambulance, MapPin, Clock } from 'lucide-react';
@@ -10,13 +8,19 @@ import { Button } from '@/components/ui/button';
 import { TipoPerfil } from '@/types';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { useRastreamentoRealtime } from '@/hooks/useRastreamentoRealtime';
-import 'mapbox-gl/dist/mapbox-gl.css';
 
-// CORREÇÃO: Configurar token global do Mapbox
+// Imports dinâmicos de react-map-gl (apenas client-side)
+import dynamic from 'next/dynamic';
+
+// Token do Mapbox (necessário para o Map)
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
-if (MAPBOX_TOKEN) {
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-}
+
+// Componentes do Mapbox carregados dinamicamente (apenas no cliente)
+const Map = dynamic(() => import('react-map-gl').then(mod => mod.default), { ssr: false });
+const Marker = dynamic(() => import('react-map-gl').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-map-gl').then(mod => mod.Popup), { ssr: false });
+const NavigationControl = dynamic(() => import('react-map-gl').then(mod => mod.NavigationControl), { ssr: false });
+const FullscreenControl = dynamic(() => import('react-map-gl').then(mod => mod.FullscreenControl), { ssr: false });
 
 interface AmbulanciaAtiva {
   id: number;

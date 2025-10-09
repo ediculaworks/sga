@@ -84,7 +84,33 @@ Aguardando seu feedback...
 
 ### 4️⃣ Avaliação do Resultado
 
-#### Se usuário responder "CORRIGIDO" ou "FUNCIONOU":
+#### ⚠️ Se usuário reportar ERROS DE BUILD/COMPILAÇÃO da hipótese atual:
+```
+⚠️ ERROS DE BUILD DETECTADOS
+
+Erros reportados:
+[Listar erros do usuário]
+
+🔧 CORREÇÃO IMEDIATA:
+- Corrigir erros na branch testeN atual
+- NÃO criar nova branch (ainda é hipótese N)
+- Fazer commit de correção
+- Fazer push
+- Solicitar novo teste
+
+⚠️ IMPORTANTE:
+Estes são erros DERIVADOS da hipótese N, não falha da hipótese.
+Após corrigir, continuamos testando a MESMA hipótese N.
+```
+
+**Ações:**
+1. Analisar e corrigir erros de build
+2. Commit: `fix: Corrigir erros de build da hipótese N`
+3. Push na mesma branch testeN
+4. Solicitar novo teste ao usuário
+5. **NÃO avançar para hipótese N+1 ainda**
+
+#### ✅ Se usuário responder "CORRIGIDO" ou "FUNCIONOU":
 ```bash
 # Fazer merge com dev
 git checkout dev
@@ -111,7 +137,7 @@ Avisar:
 
 **ATUALIZAR CHANGELOG.md** com a correção
 
-#### Se usuário responder "NÃO CORRIGIDO" ou "NÃO FUNCIONOU":
+#### ❌ Se usuário responder "NÃO CORRIGIDO" ou "NÃO FUNCIONOU":
 ```
 ❌ Hipótese N não resolveu o problema.
 
