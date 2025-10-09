@@ -478,6 +478,36 @@ Após aplicar otimizações, verificar:
 
 Sempre que aplicar estas diretrizes, documentar aqui:
 
+### [2025-10-08] - Revisão #2
+- **Arquivos modificados:**
+  - `src/lib/utils/formatters.ts` (adicionadas funções de formatação de input)
+  - `src/components/ocorrencias/CriarOcorrenciaForm.tsx`
+  - `src/components/ocorrencias/OcorrenciasTable.tsx`
+  - `src/app/(dashboard)/chefe-medicos/ocorrencias/page.tsx`
+
+- **Otimizações aplicadas:**
+  1. ✅ **Funções inline removidas**: Criadas `formatarInputData` e `formatarInputHora` em formatters.ts
+  2. ✅ **Imports otimizados**: Removido uso de default imports de date-fns (corrigido para named imports)
+  3. ✅ **Memoização adicionada**:
+     - OcorrenciasTable: useMemo para filtros e paginação
+     - OcorrenciasTable: useCallback para todos os handlers (busca, filtros, ações)
+  4. ✅ **Código centralizado**: Removidas duplicações de labels (STATUS_LABELS, TIPO_TRABALHO_LABELS, TIPO_AMBULANCIA_LABELS)
+  5. ✅ **TypeScript corrigido**: TipoPerfil.CHEFE_MEDICOS ao invés de string literal
+  6. ✅ **Redução de re-renders**: Handlers memorizados previnem recriação em cada render
+
+- **Impacto estimado:**
+  - ⚡ **Menos re-renders**: Memoização evita renderizações desnecessárias em tabelas grandes
+  - 💾 **Código reutilizável**: Funções de formatação centralizadas (formatarInputData, formatarInputHora)
+  - 🎯 **Código limpo**: Remoção de duplicações e funções inline
+  - 📦 **Bundle otimizado**: Imports corretos de date-fns permitem melhor tree-shaking
+
+- **Problemas encontrados e corrigidos:**
+  - Default imports de date-fns causando erros TypeScript (corrigido para named imports)
+  - Perfil CHEFE_MEDICOS como string literal (corrigido para TipoPerfil.CHEFE_MEDICOS)
+  - Referência a occ.ambulancia.placa sem join (corrigido para occ.ambulancia_id)
+
+---
+
 ### [2025-10-08] - Revisão #1
 - **Arquivos modificados:**
   - `src/lib/utils/formatters.ts` (adicionadas funções)

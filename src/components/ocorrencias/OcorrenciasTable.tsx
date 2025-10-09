@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,44 +28,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-
-/**
- * Mapa de cores para status de ocorrência
- */
-const STATUS_COLORS: Partial<Record<StatusOcorrencia, string>> = {
-  [StatusOcorrencia.EM_ABERTO]: 'bg-yellow-500',
-  [StatusOcorrencia.CONFIRMADA]: 'bg-blue-500',
-  [StatusOcorrencia.EM_ANDAMENTO]: 'bg-green-500',
-  [StatusOcorrencia.CONCLUIDA]: 'bg-gray-500',
-};
-
-/**
- * Mapa de labels para status
- */
-const STATUS_LABELS: Partial<Record<StatusOcorrencia, string>> = {
-  [StatusOcorrencia.EM_ABERTO]: 'Em Aberto',
-  [StatusOcorrencia.CONFIRMADA]: 'Confirmada',
-  [StatusOcorrencia.EM_ANDAMENTO]: 'Em Andamento',
-  [StatusOcorrencia.CONCLUIDA]: 'Concluída',
-};
-
-/**
- * Mapa de labels para tipos de trabalho
- */
-const TIPO_TRABALHO_LABELS: Record<TipoTrabalho, string> = {
-  [TipoTrabalho.EVENTO]: 'Evento',
-  [TipoTrabalho.EMERGENCIA]: 'Emergência',
-  [TipoTrabalho.DOMICILIAR]: 'Domiciliar',
-  [TipoTrabalho.TRANSFERENCIA]: 'Transferência',
-};
-
-/**
- * Mapa de labels para tipos de ambulância
- */
-const TIPO_AMBULANCIA_LABELS: Record<TipoAmbulancia, string> = {
-  [TipoAmbulancia.BASICA]: 'Básica',
-  [TipoAmbulancia.EMERGENCIA]: 'Emergência',
-};
+import {
+  STATUS_COLORS,
+  STATUS_LABELS,
+  TIPO_AMBULANCIA_LABELS,
+  TIPO_TRABALHO_LABELS,
+  getBadgeColor,
+} from '@/lib/utils/styles';
 
 interface OcorrenciasTableProps {
   onVerDetalhes?: (ocorrencia: Ocorrencia) => void;
@@ -124,44 +93,50 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
   });
 
   /**
-   * Filtra ocorrências por busca e filtros
+   * Filtra ocorrências por busca e filtros (memoizado)
    */
-  const ocorrenciasFiltradas = ocorrencias?.filter((occ) => {
-    // Filtro de busca (número ou local)
-    const buscaLower = busca.toLowerCase();
-    const matchBusca =
-      !busca ||
-      occ.numero_ocorrencia.toLowerCase().includes(buscaLower) ||
-      occ.local_ocorrencia.toLowerCase().includes(buscaLower);
+  const ocorrenciasFiltradas = useMemo(() => {
+    return ocorrencias?.filter((occ) => {
+      // Filtro de busca (número ou local)
+      const buscaLower = busca.toLowerCase();
+      const matchBusca =
+        !busca ||
+        occ.numero_ocorrencia.toLowerCase().includes(buscaLower) ||
+        occ.local_ocorrencia.toLowerCase().includes(buscaLower);
 
-    // Filtro de status
-    const matchStatus =
-      statusFiltro === 'TODOS' || occ.status_ocorrencia === statusFiltro;
+      // Filtro de status
+      const matchStatus =
+        statusFiltro === 'TODOS' || occ.status_ocorrencia === statusFiltro;
 
-    // Filtro de tipo de trabalho
-    const matchTipoTrabalho =
-      tipoTrabalhoFiltro === 'TODOS' || occ.tipo_trabalho === tipoTrabalhoFiltro;
+      // Filtro de tipo de trabalho
+      const matchTipoTrabalho =
+        tipoTrabalhoFiltro === 'TODOS' || occ.tipo_trabalho === tipoTrabalhoFiltro;
 
-    // Filtro de tipo de ambulância
-    const matchTipoAmbulancia =
-      tipoAmbulanciaPaddedFiltro === 'TODOS' ||
-      occ.tipo_ambulancia === tipoAmbulanciaPaddedFiltro;
+      // Filtro de tipo de ambulância
+      const matchTipoAmbulancia =
+        tipoAmbulanciaPaddedFiltro === 'TODOS' ||
+        occ.tipo_ambulancia === tipoAmbulanciaPaddedFiltro;
 
-    return matchBusca && matchStatus && matchTipoTrabalho && matchTipoAmbulancia;
-  });
+      return matchBusca && matchStatus && matchTipoTrabalho && matchTipoAmbulancia;
+    });
+  }, [ocorrencias, busca, statusFiltro, tipoTrabalhoFiltro, tipoAmbulanciaPaddedFiltro]);
 
   /**
-   * Paginação
+   * Paginação (memoizado)
    */
-  const totalPaginas = Math.ceil((ocorrenciasFiltradas?.length || 0) / itensPorPagina);
-  const inicio = (paginaAtual - 1) * itensPorPagina;
-  const fim = inicio + itensPorPagina;
-  const ocorrenciasPaginadas = ocorrenciasFiltradas?.slice(inicio, fim);
+  const { totalPaginas, ocorrenciasPaginadas } = useMemo(() => {
+    const total = Math.ceil((ocorrenciasFiltradas?.length || 0) / itensPorPagina);
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const paginadas = ocorrenciasFiltradas?.slice(inicio, fim);
+
+    return { totalPaginas: total, ocorrenciasPaginadas: paginadas };
+  }, [ocorrenciasFiltradas, paginaAtual]);
 
   /**
-   * Retorna classe de background baseado no status
+   * Retorna classe de background baseado no status (memoizado)
    */
-  const getRowClassName = (status: StatusOcorrencia) => {
+  const getRowClassName = useCallback((status: StatusOcorrencia) => {
     if (status === StatusOcorrencia.EM_ANDAMENTO) {
       return 'bg-green-50 hover:bg-green-100';
     }
@@ -169,7 +144,42 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
       return 'bg-blue-50 hover:bg-blue-100';
     }
     return 'hover:bg-gray-50';
-  };
+  }, []);
+
+  /**
+   * Handlers (memoizados)
+   */
+  const handleBuscaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setBusca(e.target.value);
+    setPaginaAtual(1);
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setStatusFiltro(value);
+    setPaginaAtual(1);
+  }, []);
+
+  const handleTipoTrabalhoChange = useCallback((value: string) => {
+    setTipoTrabalhoFiltro(value);
+    setPaginaAtual(1);
+  }, []);
+
+  const handleTipoAmbulanciaChange = useCallback((value: string) => {
+    setTipoAmbulanciaPaddedFiltro(value);
+    setPaginaAtual(1);
+  }, []);
+
+  const handleVerDetalhes = useCallback((occ: Ocorrencia) => {
+    if (onVerDetalhes) {
+      onVerDetalhes(occ);
+    }
+  }, [onVerDetalhes]);
+
+  const handleExcluir = useCallback((ocorrenciaId: number, numeroOcorrencia: string) => {
+    if (onExcluir && confirm(`Tem certeza que deseja excluir a ocorrência ${numeroOcorrencia}?`)) {
+      onExcluir(ocorrenciaId);
+    }
+  }, [onExcluir]);
 
   /**
    * Loading state
@@ -208,10 +218,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
           <Input
             placeholder="Buscar por número ou local..."
             value={busca}
-            onChange={(e) => {
-              setBusca(e.target.value);
-              setPaginaAtual(1); // Reset para primeira página
-            }}
+            onChange={handleBuscaChange}
             className="pl-9"
           />
         </div>
@@ -219,10 +226,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
         {/* Filtro de Status */}
         <Select
           value={statusFiltro}
-          onValueChange={(value) => {
-            setStatusFiltro(value);
-            setPaginaAtual(1);
-          }}
+          onValueChange={handleStatusChange}
         >
           <SelectTrigger>
             <SelectValue placeholder="Status" />
@@ -239,10 +243,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
         {/* Filtro de Tipo de Trabalho */}
         <Select
           value={tipoTrabalhoFiltro}
-          onValueChange={(value) => {
-            setTipoTrabalhoFiltro(value);
-            setPaginaAtual(1);
-          }}
+          onValueChange={handleTipoTrabalhoChange}
         >
           <SelectTrigger>
             <SelectValue placeholder="Tipo" />
@@ -259,10 +260,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
         {/* Filtro de Tipo de Ambulância */}
         <Select
           value={tipoAmbulanciaPaddedFiltro}
-          onValueChange={(value) => {
-            setTipoAmbulanciaPaddedFiltro(value);
-            setPaginaAtual(1);
-          }}
+          onValueChange={handleTipoAmbulanciaChange}
         >
           <SelectTrigger>
             <SelectValue placeholder="Ambulância" />
@@ -329,9 +327,9 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
                   {occ.local_ocorrencia}
                 </TableCell>
                 <TableCell>
-                  {occ.ambulancia?.placa ? (
+                  {occ.ambulancia_id ? (
                     <span className="font-mono font-medium">
-                      {occ.ambulancia.placa}
+                      ID: {occ.ambulancia_id}
                     </span>
                   ) : (
                     <span className="text-sm text-gray-400">Não atribuída</span>
@@ -342,7 +340,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onVerDetalhes?.(occ)}
+                      onClick={() => handleVerDetalhes(occ)}
                     >
                       Ver Detalhes
                     </Button>
@@ -350,11 +348,7 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          if (confirm(`Tem certeza que deseja excluir a ocorrência ${occ.numero_ocorrencia}?`)) {
-                            onExcluir(occ.id);
-                          }
-                        }}
+                        onClick={() => handleExcluir(occ.id, occ.numero_ocorrencia)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

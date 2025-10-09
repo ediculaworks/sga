@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,7 @@ import {
   TIPO_AMBULANCIA_LABELS,
   TIPO_TRABALHO_LABELS,
 } from '@/lib/utils/styles';
+import { formatarInputData, formatarInputHora } from '@/lib/utils/formatters';
 
 interface CriarOcorrenciaFormProps {
   onSubmit: (data: CriarOcorrenciaFormData) => Promise<void>;
@@ -190,14 +191,7 @@ export function CriarOcorrenciaForm({
               placeholder="DD/MM/AAAA"
               maxLength={10}
               onInput={(e) => {
-                let value = e.currentTarget.value.replace(/\D/g, '');
-                if (value.length >= 3) {
-                  value = value.slice(0, 2) + '/' + value.slice(2);
-                }
-                if (value.length >= 6) {
-                  value = value.slice(0, 5) + '/' + value.slice(5, 9);
-                }
-                e.currentTarget.value = value;
+                e.currentTarget.value = formatarInputData(e.currentTarget.value);
               }}
             />
             <p className="text-xs text-gray-500">
@@ -322,11 +316,7 @@ export function CriarOcorrenciaForm({
                 placeholder="HH:MM"
                 maxLength={5}
                 onInput={(e) => {
-                  let value = e.currentTarget.value.replace(/\D/g, '');
-                  if (value.length >= 3) {
-                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
-                  }
-                  e.currentTarget.value = value;
+                  e.currentTarget.value = formatarInputHora(e.currentTarget.value);
                 }}
               />
               <p className="text-xs text-gray-500">Digite o horário (ex: 14:30)</p>
@@ -349,11 +339,7 @@ export function CriarOcorrenciaForm({
                 placeholder="HH:MM"
                 maxLength={5}
                 onInput={(e) => {
-                  let value = e.currentTarget.value.replace(/\D/g, '');
-                  if (value.length >= 3) {
-                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
-                  }
-                  e.currentTarget.value = value;
+                  e.currentTarget.value = formatarInputHora(e.currentTarget.value);
                 }}
               />
               <p className="text-xs text-gray-500">Digite o horário (ex: 15:00)</p>
@@ -471,14 +457,7 @@ export function CriarOcorrenciaForm({
                 placeholder="DD/MM/AAAA"
                 maxLength={10}
                 onInput={(e) => {
-                  let value = e.currentTarget.value.replace(/\D/g, '');
-                  if (value.length >= 3) {
-                    value = value.slice(0, 2) + '/' + value.slice(2);
-                  }
-                  if (value.length >= 6) {
-                    value = value.slice(0, 5) + '/' + value.slice(5, 9);
-                  }
-                  e.currentTarget.value = value;
+                  e.currentTarget.value = formatarInputData(e.currentTarget.value);
                 }}
               />
               <p className="text-xs text-gray-500">Data de pagamento (ex: 31/12/2025)</p>

@@ -245,3 +245,37 @@ export function formatSexo(sexo: string | null | undefined): string {
   if (!sexo) return '-';
   return sexo === 'M' ? 'Masculino' : sexo === 'F' ? 'Feminino' : '-';
 }
+
+/**
+ * FORMATADORES DE INPUT (para onInput)
+ * Funções para formatar dados enquanto o usuário digita
+ */
+
+/**
+ * Formata input de data no padrão DD/MM/AAAA
+ * @param value - Valor atual do input
+ * @returns Valor formatado
+ */
+export function formatarInputData(value: string): string {
+  let numeros = value.replace(/\D/g, '');
+  if (numeros.length >= 3) {
+    numeros = numeros.slice(0, 2) + '/' + numeros.slice(2);
+  }
+  if (numeros.length >= 6) {
+    numeros = numeros.slice(0, 5) + '/' + numeros.slice(5, 9);
+  }
+  return numeros;
+}
+
+/**
+ * Formata input de hora no padrão HH:MM
+ * @param value - Valor atual do input
+ * @returns Valor formatado
+ */
+export function formatarInputHora(value: string): string {
+  let numeros = value.replace(/\D/g, '');
+  if (numeros.length >= 3) {
+    numeros = numeros.slice(0, 2) + ':' + numeros.slice(2, 4);
+  }
+  return numeros;
+}

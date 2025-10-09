@@ -83,7 +83,7 @@ export default function OcorrenciasPage() {
             ocorrenciaId={ocorrenciaSelecionada.id}
             isOpen={!!ocorrenciaSelecionada}
             onClose={() => setOcorrenciaSelecionada(null)}
-            perfil="CHEFE_MEDICOS"
+            perfil={TipoPerfil.CHEFE_MEDICOS}
           />
         )}
       </div>
