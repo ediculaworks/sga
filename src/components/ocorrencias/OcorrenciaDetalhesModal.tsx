@@ -451,7 +451,7 @@ export function OcorrenciaDetalhesModal({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : ocorrencia ? (
-          <div className="space-y-6">
+          <div className="space-y-6 w-full max-w-full overflow-hidden">
             {/* Número da Ocorrência */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-1">
@@ -495,27 +495,29 @@ export function OcorrenciaDetalhesModal({
 
             {/* Descrição */}
             {ocorrencia.descricao && (
-              <div>
+              <div className="w-full">
                 <p className="text-sm text-gray-600 mb-2 font-medium">
                   Descrição
                 </p>
-                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border break-words overflow-wrap-anywhere whitespace-pre-wrap max-w-full">
-                  {ocorrencia.descricao}
-                </p>
+                <div className="text-gray-900 bg-gray-50 p-3 rounded-lg border w-full overflow-hidden">
+                  <p className="whitespace-pre-wrap break-words w-full">
+                    {ocorrencia.descricao}
+                  </p>
+                </div>
               </div>
             )}
 
             {/* Local */}
-            <div>
+            <div className="w-full overflow-hidden">
               <p className="text-sm text-gray-600 mb-2 font-medium flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 Local da Ocorrência
               </p>
-              <p className="text-gray-900 font-medium break-words max-w-full">
+              <p className="text-gray-900 font-medium break-words w-full">
                 {ocorrencia.local_ocorrencia}
               </p>
               {ocorrencia.endereco_completo && (
-                <p className="text-gray-600 text-sm mt-1 break-words max-w-full">
+                <p className="text-gray-600 text-sm mt-1 break-words w-full">
                   {ocorrencia.endereco_completo}
                 </p>
               )}
@@ -632,7 +634,7 @@ export function OcorrenciaDetalhesModal({
               )}
 
             {/* Participantes/Vagas */}
-            <div>
+            <div className="w-full">
               <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
                 <Users className="w-4 h-4" />
                 Equipe / Vagas
@@ -641,23 +643,23 @@ export function OcorrenciaDetalhesModal({
                 {participantes.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 border rounded-lg"
+                    className="flex items-center justify-between p-3 bg-gray-50 border rounded-lg w-full overflow-hidden"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-sm font-medium text-gray-700 flex-shrink-0">
                         {formatLabel(p.funcao)}
                       </span>
                       {p.confirmado && p.usuario ? (
                         <>
-                          <span className="text-gray-600">-</span>
-                          <span className="text-sm text-gray-900">
+                          <span className="text-gray-600 flex-shrink-0">-</span>
+                          <span className="text-sm text-gray-900 truncate">
                             {p.usuario.nome_completo}
                           </span>
                         </>
                       ) : null}
                     </div>
                     <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getBadgeColor(
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border flex-shrink-0 ${getBadgeColor(
                         'status',
                         p.confirmado ? 'confirmado' : 'disponivel'
                       )}`}
