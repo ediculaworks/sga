@@ -179,9 +179,11 @@ export function useOcorrenciasDisponiveis(
     enabled: !!usuarioId,
     // Otimização: Cache aumentado para evitar recarregamentos desnecessários
     // As queries serão invalidadas manualmente após ações (confirmar participação)
-    staleTime: 1000 * 60 * 5, // 5 minutos - dados considerados frescos
+    staleTime: 1000 * 60 * 3, // 3 minutos - dados considerados frescos
     gcTime: 1000 * 60 * 10, // 10 minutos - mantém em cache mesmo sem uso
-    refetchOnWindowFocus: true, // Revalida ao voltar para a janela
-    refetchOnMount: true, // Revalida ao montar o componente
+    refetchOnWindowFocus: false, // NÃO revalidar ao focar janela (evita re-fetches)
+    refetchOnMount: false, // NÃO revalidar ao montar se dados estão frescos
+    retry: 2, // Tentar apenas 2 vezes em caso de erro (ao invés de padrão 3)
+    retryDelay: 1000, // 1 segundo entre retries
   });
 }

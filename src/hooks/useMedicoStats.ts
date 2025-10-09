@@ -127,6 +127,10 @@ export function useMedicoStats(medicoId: number) {
       };
     },
     enabled: !!medicoId,
+    staleTime: 1000 * 60 * 3, // 3 minutos - dados considerados frescos
+    gcTime: 1000 * 60 * 10, // 10 minutos - mantém em cache
+    refetchOnWindowFocus: false, // Não revalidar ao focar janela (evita re-fetches desnecessários)
+    refetchOnMount: false, // Não revalidar ao montar se dados estão frescos
   });
 
   // Query para ocorrências a receber (pagamentos pendentes)
@@ -166,6 +170,10 @@ export function useMedicoStats(medicoId: number) {
       };
     },
     enabled: !!medicoId,
+    staleTime: 1000 * 60 * 5, // 5 minutos - pagamentos mudam menos frequentemente
+    gcTime: 1000 * 60 * 15, // 15 minutos - mantém em cache por mais tempo
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Query para remoções
@@ -200,6 +208,10 @@ export function useMedicoStats(medicoId: number) {
       };
     },
     enabled: !!medicoId,
+    staleTime: 1000 * 60 * 3, // 3 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const isLoading = isLoadingOcorrencias || isLoadingPagamentos || isLoadingRemocoes;

@@ -20,7 +20,7 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { TipoPerfil } from '@/types';
 
 /**
@@ -43,20 +43,20 @@ function EnfermeiroDashboardContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmando, setIsConfirmando] = useState(false);
 
-  // Handler para ver detalhes da ocorrência
-  const handleVerDetalhes = (ocorrenciaId: number) => {
+  // Handler para ver detalhes da ocorrência (memoizado)
+  const handleVerDetalhes = useCallback((ocorrenciaId: number) => {
     setModalOcorrenciaId(ocorrenciaId);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  // Handler para fechar modal
-  const handleCloseModal = () => {
+  // Handler para fechar modal (memoizado)
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setModalOcorrenciaId(null);
-  };
+  }, []);
 
-  // Handler para confirmar participação
-  const handleConfirmarParticipacao = async (ocorrenciaId: number) => {
+  // Handler para confirmar participação (memoizado)
+  const handleConfirmarParticipacao = useCallback(async (ocorrenciaId: number) => {
     if (!user?.id) {
       toast.error('Usuário não identificado');
       return;
@@ -85,7 +85,7 @@ function EnfermeiroDashboardContent() {
     } finally {
       setIsConfirmando(false);
     }
-  };
+  }, [user?.id, queryClient, handleCloseModal]);
 
   // Formatar valor em reais
   const formatCurrency = (value: number) => {
