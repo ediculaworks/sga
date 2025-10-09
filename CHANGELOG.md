@@ -34,7 +34,47 @@ Descrição clara e concisa da mudança.
 
 ### 🐛 Corrigido
 
-**1. Visualização de Informações Cortadas no Modal (Revisão do Erro 2)**
+**1. Exibição de Ocorrências Confirmadas no Dashboard (Erro 3)**
+
+**Problema:**
+- Quando profissional confirmava participação em ocorrência, ela aparecia em "Minhas Ocorrências Confirmadas" mesmo com status "EM_ABERTO"
+- Isso acontecia quando a ocorrência ainda tinha vagas pendentes (aguardando outros profissionais)
+- Status da ocorrência deve mudar para "CONFIRMADA" apenas quando TODAS as vagas forem preenchidas
+- Profissional via status "Confirmada" mas a ocorrência real estava "Em Aberto"
+
+**Causa Raiz:**
+- Hook `useOcorrenciasDisponiveis` verificava apenas se o profissional estava confirmado (`jaConfirmado`)
+- Não validava o `status_ocorrencia` real da ocorrência
+- Linha 121: `if (jaConfirmado)` sem verificar se todas as vagas foram preenchidas
+
+**Solução:**
+- Adicionar validação dupla: `jaConfirmado && ocorrencia.status_ocorrencia === 'CONFIRMADA'`
+- Se profissional confirmou mas ocorrência está EM_ABERTO (aguardando outros):
+  * Mostrar em "Ocorrências Disponíveis" (não em "Confirmadas")
+  * Com flag `profissional_confirmado: true` para indicar que já confirmou
+  * Com status real da ocorrência (EM_ABERTO)
+- Apenas mostrar em "Confirmadas" quando status da ocorrência for CONFIRMADA
+
+**Lógica Implementada:**
+1. `jaConfirmado + status CONFIRMADA` → Lista "Confirmadas"
+2. `jaConfirmado + status EM_ABERTO` → Lista "Disponíveis" (aguardando outros)
+3. `!jaConfirmado + status EM_ABERTO + vagas` → Lista "Disponíveis"
+
+**Arquivos:**
+- `src/hooks/useOcorrenciasDisponiveis.ts:121` - Validação dupla
+- `src/hooks/useOcorrenciasDisponiveis.ts:136-162` - Caso: já confirmou + EM_ABERTO
+
+**Resultado:**
+- ✅ Ocorrência só aparece em "Confirmadas" quando status = CONFIRMADA
+- ✅ Profissional vê ocorrência que confirmou em "Disponíveis" se ainda EM_ABERTO
+- ✅ Status real da ocorrência sempre exibido corretamente
+- ✅ Visibilidade de que está aguardando outros profissionais
+
+**Commit:** `abc7384`
+
+---
+
+**2. Visualização de Informações Cortadas no Modal (Revisão do Erro 2)**
 
 **Problema:**
 - Após remover overflow horizontal, informações estavam sendo cortadas
