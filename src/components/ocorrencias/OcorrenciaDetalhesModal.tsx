@@ -403,20 +403,36 @@ export function OcorrenciaDetalhesModal({
               </div>
             </div>
 
-            {/* Informações de Pagamento - Apenas para o profissional da mesma categoria */}
-            {participantes.some((p) => p.valor_pagamento && p.funcao === perfil) && (
+            {/* Informações de Pagamento */}
+            {/* Chefe dos Médicos vê todos os valores | Profissionais veem apenas seu valor */}
+            {participantes.some((p) => p.valor_pagamento) && (
+              perfil === 'CHEFE_MEDICOS' || participantes.some((p) => p.valor_pagamento && p.funcao === perfil)
+            ) && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
                   <DollarSign className="w-4 h-4" />
                   Informações de Pagamento
+                  {perfil === 'CHEFE_MEDICOS' && (
+                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                      Visão Completa
+                    </span>
+                  )}
                 </p>
                 <div className="space-y-2">
                   {participantes
-                    .filter((p) => p.valor_pagamento && p.funcao === perfil)
+                    .filter((p) =>
+                      p.valor_pagamento &&
+                      (perfil === 'CHEFE_MEDICOS' || p.funcao === perfil)
+                    )
                     .map((p) => (
                       <div key={p.id} className="flex justify-between text-sm">
                         <span className="text-gray-700">
-                          {formatLabel(p.funcao)}:
+                          {formatLabel(p.funcao)}
+                          {p.usuario && perfil === 'CHEFE_MEDICOS' && (
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({p.usuario.nome_completo})
+                            </span>
+                          )}:
                         </span>
                         <div className="text-right">
                           <span className="font-semibold text-green-800">
@@ -432,6 +448,16 @@ export function OcorrenciaDetalhesModal({
                       </div>
                     ))}
                 </div>
+                {perfil === 'CHEFE_MEDICOS' && participantes.filter(p => p.valor_pagamento).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-green-300 flex justify-between text-sm font-bold">
+                    <span className="text-gray-700">Total:</span>
+                    <span className="text-green-900">
+                      {formatCurrency(
+                        participantes.reduce((acc, p) => acc + (p.valor_pagamento || 0), 0)
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
