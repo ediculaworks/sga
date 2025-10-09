@@ -85,24 +85,21 @@ export function OcorrenciasTable({ onVerDetalhes }: OcorrenciasTableProps) {
   const itensPorPagina = 20;
 
   /**
-   * Query para buscar ocorrências com joins
+   * Query para buscar ocorrências
+   * Nota: Não fazemos join com ambulancias aqui devido a problemas de RLS
+   * A placa será obtida em uma query separada se necessário
    */
   const { data: ocorrencias, isLoading } = useQuery({
     queryKey: ['ocorrencias-completas'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ocorrencias')
-        .select(
-          `
-          *,
-          ambulancia:ambulancias(placa)
-        `
-        )
+        .select('*')
         .order('status_ocorrencia', { ascending: true }) // Ativas primeiro
         .order('data_ocorrencia', { ascending: false }); // Mais recentes primeiro
 
       if (error) throw error;
-      return data as (Ocorrencia & { ambulancia?: { placa: string } })[];
+      return data as Ocorrencia[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
   });

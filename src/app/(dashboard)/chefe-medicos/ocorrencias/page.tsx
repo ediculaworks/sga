@@ -7,7 +7,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { OcorrenciasTable } from '@/components/ocorrencias/OcorrenciasTable';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import type { Ocorrencia } from '@/types';
-import { PerfilUsuario } from '@/types';
+import { TipoPerfil } from '@/types';
 
 /**
  * Página de Banco de Dados de Ocorrências
@@ -26,7 +26,7 @@ export default function OcorrenciasPage() {
     useState<Ocorrencia | null>(null);
 
   return (
-    <ProtectedRoute perfisPermitidos={[PerfilUsuario.CHEFE_MEDICOS]}>
+    <ProtectedRoute perfisPermitidos={[TipoPerfil.CHEFE_MEDICOS]}>
       <div className="space-y-6">
         {/* Header */}
         <div>
