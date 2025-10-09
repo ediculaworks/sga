@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Map, { Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl';
+import Map, { Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { Ambulance, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TipoPerfil } from '@/types';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { useRastreamentoRealtime } from '@/hooks/useRastreamentoRealtime';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -333,7 +334,7 @@ export function MapaRastreamento({
             setIsOcorrenciaModalOpen(false);
             setOcorrenciaModalId(null);
           }}
-          perfil="CHEFE_MEDICOS"
+          perfil={TipoPerfil.CHEFE_MEDICOS}
         />
       )}
     </>

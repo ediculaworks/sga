@@ -160,6 +160,194 @@ Implementar **FASE 10.1 - Gestão de Ambulâncias**
 
 ---
 
+## [0.18.0] - 2025-10-09
+
+### ✅ Adicionado
+
+#### FASE 10.1 - Gestão de Ambulâncias
+
+**Página de Gestão de Ambulâncias** (`src/app/(dashboard)/chefe-medicos/ambulancias/page.tsx`)
+- Página exclusiva do Chefe dos Médicos
+- Layout responsivo com filtros e cards
+- Proteção de rota (apenas CHEFE_MEDICOS)
+- **Filtros:**
+  - Por status (Todas, Pronta, Pendente, Revisão, Em Operação)
+  - Atualização automática de resultados
+- **Visualização:**
+  - Agrupamento automático por status quando "Todas" selecionado
+  - Grid responsivo de cards
+  - Contador de ambulâncias por status
+  - Cores específicas por grupo de status
+
+**Componente CadastrarAmbulanciaModal** (`src/components/ambulancias/CadastrarAmbulanciaModal.tsx`)
+- Modal de cadastro de nova ambulância
+- **Formulário com React Hook Form + Zod:**
+  - Placa (validação de formato brasileiro)
+  - Marca, Modelo, Ano
+  - Motor (opcional)
+  - Kilometragem inicial
+  - Kilometragem de próxima revisão (opcional)
+- **Validações:**
+  - Placa: 7 caracteres, formato ABC1234 ou ABC1D23
+  - Ano: mínimo 1990, máximo ano atual + 1
+  - Kilometragem: apenas valores positivos
+  - Conversão automática de placa para maiúsculas
+- **Tratamento de Erros:**
+  - Placa duplicada (constraint unique)
+  - Feedback com react-hot-toast
+  - Estados de loading
+- **Comportamento:**
+  - Ambulâncias novas sempre com status PENDENTE
+  - Reset automático do formulário após sucesso
+  - Callback de atualização da lista
+
+**Componente AmbulanciaCard** (`src/components/ambulancias/AmbulanciaCard.tsx`)
+- Card clicável para cada ambulância
+- **Informações Exibidas:**
+  - Placa e modelo
+  - Status com badge colorido
+  - Tipo de ambulância (Básica/Emergência)
+  - Ano
+  - Kilometragem atual
+- **Recursos:**
+  - Alerta visual de revisão necessária
+  - Ícone de ambulância (Lucide Icons)
+  - Botão "Ver Detalhes"
+  - Hover effect
+  - Integração com modal de detalhes
+
+**Componente AmbulanciaDetalhesModal** (`src/components/ambulancias/AmbulanciaDetalhesModal.tsx`)
+- Modal completo com informações detalhadas
+- **Seção Informações Técnicas:**
+  - Ano, tipo atual, motor
+  - Kilometragem atual
+  - Data da última revisão
+  - Kilometragem da próxima revisão
+- **Seção Estatísticas de Uso:**
+  - Total de ocorrências
+  - Total de emergências
+  - Total de eventos
+  - Total de gastos
+  - Dados da view `vw_estatisticas_ambulancias`
+- **Seção Últimas Ocorrências:**
+  - Lista das 10 últimas ocorrências
+  - Número, local, data e tipo
+  - Ordenação por data (mais recente primeiro)
+  - Cards clicáveis
+- **Seção Gastos Recentes:**
+  - Lista dos 10 últimos gastos
+  - Tipo de gasto, descrição, valor e data
+  - Total calculado
+  - Ordenação por data
+- **Queries React Query:**
+  - `ambulancia-detalhes` - Dados completos da ambulância
+  - `ambulancia-ocorrencias` - Histórico de ocorrências
+  - `ambulancia-gastos` - Registros de gastos
+  - `ambulancia-estatisticas` - Estatísticas agregadas
+  - Cache de 2 minutos
+
+**Serviço ambulanciasService** (`src/lib/services/ambulancias.ts`)
+- CRUD completo já existente no sistema
+- Métodos utilizados:
+  - `getAll()` - Buscar todas
+  - `getAtivas()` - Buscar ativas
+  - `getByStatus(status)` - Filtrar por status
+  - `create(data)` - Cadastrar nova
+  - `update(id, data)` - Atualizar
+  - `desativar(id)` - Soft delete
+
+**Bibliotecas Instaladas:**
+- `react-hot-toast@2.6.0` - Notificações toast
+- `@radix-ui/react-separator@1.1.7` - Componente separator (shadcn/ui)
+
+### 🐛 Corrigido
+
+**Correções de Tipagem e Compatibilidade:**
+- Corrigido import do react-map-gl para versão 8.x
+  - Alterado para `react-map-gl/mapbox`
+  - Compatível com mapbox-gl
+- Corrigido prop do ProtectedRoute
+  - De `perfisPermitidos` para `allowedProfiles`
+  - Aplicado em:
+    * `/chefe-medicos/ambulancias`
+    * `/chefe-medicos/rastreamento`
+- Corrigido schema de validação Zod
+  - Removido `z.coerce` para usar `valueAsNumber`
+  - Campos: ano, kilometragem, kilometragem_proxima_revisao
+  - Melhoria de type safety
+- Corrigido enum StatusAmbulancia
+  - Uso correto do enum importado
+  - Substituído string literal por `StatusAmbulancia.PENDENTE`
+- Corrigido enum TipoPerfil no MapaRastreamento
+  - Substituído string literal por `TipoPerfil.CHEFE_MEDICOS`
+
+### 📝 Arquivos Criados
+- `src/app/(dashboard)/chefe-medicos/ambulancias/page.tsx` - Página principal (180 linhas)
+- `src/components/ambulancias/CadastrarAmbulanciaModal.tsx` - Modal de cadastro (220 linhas)
+- `src/components/ambulancias/AmbulanciaCard.tsx` - Card de ambulância (130 linhas)
+- `src/components/ambulancias/AmbulanciaDetalhesModal.tsx` - Modal de detalhes (340 linhas)
+- `src/components/ui/separator.tsx` - Componente separator (shadcn/ui)
+
+### 📝 Arquivos Modificados
+- `src/components/rastreamento/MapaRastreamento.tsx` - Correção de imports
+- `src/app/(dashboard)/chefe-medicos/rastreamento/page.tsx` - Correção de props
+- `package.json` - Adicionadas dependências
+
+### 🎯 Fluxo Completo Implementado
+
+1. **Chefe dos Médicos acessa** `/chefe-medicos/ambulancias`
+2. **Visualiza lista de ambulâncias** agrupadas por status
+3. **Aplica filtros** por status específico
+4. **Clica em "Cadastrar Ambulância"**
+   - Preenche formulário
+   - Sistema valida dados
+   - Cria ambulância com status PENDENTE
+5. **Clica em card** para ver detalhes
+   - Informações técnicas completas
+   - Estatísticas de uso
+   - Histórico de ocorrências
+   - Registro de gastos
+6. **Lista atualiza** automaticamente após cadastro
+
+### 🔍 Funcionalidades Destacadas
+
+- **Filtro Inteligente:**
+  - "Todas" mostra agrupamento por status
+  - Filtro específico mostra grid simples
+  - Cores visuais por tipo de status
+
+- **Validação Robusta:**
+  - Placa brasileira (ABC1234 ou Mercosul ABC1D23)
+  - Ano entre 1990 e ano atual + 1
+  - Kilometragem sempre positiva
+
+- **Alertas Visuais:**
+  - Card destaca ambulâncias que precisam de revisão
+  - Compara kilometragem atual vs próxima revisão
+
+- **Estatísticas Completas:**
+  - Integração com view `vw_estatisticas_ambulancias`
+  - Dados agregados de uso
+  - Gastos totais por ambulância
+
+### 📋 Próximas Melhorias Sugeridas
+
+- [ ] Edição de ambulâncias cadastradas
+- [ ] Exportar lista para CSV/PDF
+- [ ] Gráficos de utilização por período
+- [ ] Histórico de manutenções
+- [ ] Alertas automáticos de revisão
+
+### ⏭️ Próximo Passo
+
+Implementar **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
 ## [0.16.0] - 2025-10-09
 
 ### ✅ Adicionado

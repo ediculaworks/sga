@@ -12,7 +12,7 @@ export default function RastreamentoPage() {
   const [ambulanciaSelecionada, setAmbulanciaSelecionada] = useState<number | null>(null);
 
   return (
-    <ProtectedRoute perfisPermitidos={[TipoPerfil.CHEFE_MEDICOS]}>
+    <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div>
