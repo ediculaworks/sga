@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { OcorrenciasTable } from '@/components/ocorrencias/OcorrenciasTable';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
+import { ocorrenciasService } from '@/lib/services/ocorrencias';
 import type { Ocorrencia } from '@/types';
 import { TipoPerfil } from '@/types';
 
@@ -24,6 +27,21 @@ import { TipoPerfil } from '@/types';
 export default function OcorrenciasPage() {
   const [ocorrenciaSelecionada, setOcorrenciaSelecionada] =
     useState<Ocorrencia | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleExcluir = async (ocorrenciaId: number) => {
+    try {
+      await ocorrenciasService.delete(ocorrenciaId);
+      toast.success('Ocorrência excluída com sucesso!');
+      // Invalidar cache para recarregar a lista
+      queryClient.invalidateQueries({ queryKey: ['ocorrencias-completas'] });
+    } catch (error: any) {
+      console.error('Erro ao excluir ocorrência:', error);
+      toast.error('Erro ao excluir ocorrência', {
+        description: error.message || 'Tente novamente mais tarde',
+      });
+    }
+  };
 
   return (
     <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
@@ -56,6 +74,7 @@ export default function OcorrenciasPage() {
         {/* Tabela */}
         <OcorrenciasTable
           onVerDetalhes={(ocorrencia) => setOcorrenciaSelecionada(ocorrencia)}
+          onExcluir={handleExcluir}
         />
 
         {/* Modal de Detalhes */}

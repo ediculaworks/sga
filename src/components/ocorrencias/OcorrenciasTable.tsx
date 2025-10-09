@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase/client';
 import type { Ocorrencia } from '@/types';
@@ -71,9 +71,10 @@ const TIPO_AMBULANCIA_LABELS: Record<TipoAmbulancia, string> = {
 
 interface OcorrenciasTableProps {
   onVerDetalhes?: (ocorrencia: Ocorrencia) => void;
+  onExcluir?: (ocorrenciaId: number) => void;
 }
 
-export function OcorrenciasTable({ onVerDetalhes }: OcorrenciasTableProps) {
+export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableProps) {
   // Estados de filtros
   const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<string>('TODOS');
@@ -89,19 +90,40 @@ export function OcorrenciasTable({ onVerDetalhes }: OcorrenciasTableProps) {
    * Nota: Não fazemos join com ambulancias aqui devido a problemas de RLS
    * A placa será obtida em uma query separada se necessário
    */
-  const { data: ocorrencias, isLoading } = useQuery({
+  const { data: ocorrenciasRaw, isLoading } = useQuery({
     queryKey: ['ocorrencias-completas'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ocorrencias')
-        .select('*')
-        .order('status_ocorrencia', { ascending: true }) // Ativas primeiro
-        .order('data_ocorrencia', { ascending: false }); // Mais recentes primeiro
+        .select('*');
 
       if (error) throw error;
       return data as Ocorrencia[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
+  });
+
+  /**
+   * Ordenar ocorrências: EM_ANDAMENTO → CONFIRMADA → EM_ABERTO → CONCLUIDA/CANCELADA
+   */
+  const ocorrencias = ocorrenciasRaw?.sort((a, b) => {
+    const prioridades: Record<StatusOcorrencia, number> = {
+      [StatusOcorrencia.EM_ANDAMENTO]: 1,
+      [StatusOcorrencia.CONFIRMADA]: 2,
+      [StatusOcorrencia.EM_ABERTO]: 3,
+      [StatusOcorrencia.CONCLUIDA]: 4,
+      [StatusOcorrencia.CANCELADA]: 5,
+    };
+
+    const prioridadeA = prioridades[a.status_ocorrencia] || 999;
+    const prioridadeB = prioridades[b.status_ocorrencia] || 999;
+
+    // Se mesma prioridade, ordenar por data decrescente
+    if (prioridadeA === prioridadeB) {
+      return new Date(b.data_ocorrencia).getTime() - new Date(a.data_ocorrencia).getTime();
+    }
+
+    return prioridadeA - prioridadeB;
   });
 
   /**
@@ -287,7 +309,7 @@ export function OcorrenciasTable({ onVerDetalhes }: OcorrenciasTableProps) {
                   {occ.numero_ocorrencia}
                 </TableCell>
                 <TableCell>
-                  <Badge className={STATUS_COLORS[occ.status_ocorrencia]}>
+                  <Badge className={`${STATUS_COLORS[occ.status_ocorrencia]} whitespace-nowrap`}>
                     {STATUS_LABELS[occ.status_ocorrencia]}
                   </Badge>
                 </TableCell>
@@ -320,13 +342,28 @@ export function OcorrenciasTable({ onVerDetalhes }: OcorrenciasTableProps) {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onVerDetalhes?.(occ)}
-                  >
-                    Ver Detalhes
-                  </Button>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onVerDetalhes?.(occ)}
+                    >
+                      Ver Detalhes
+                    </Button>
+                    {onExcluir && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Tem certeza que deseja excluir a ocorrência ${occ.numero_ocorrencia}?`)) {
+                            onExcluir(occ.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
