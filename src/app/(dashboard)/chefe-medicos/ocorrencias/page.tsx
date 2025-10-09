@@ -26,7 +26,7 @@ export default function OcorrenciasPage() {
     useState<Ocorrencia | null>(null);
 
   return (
-    <ProtectedRoute perfisPermitidos={[TipoPerfil.CHEFE_MEDICOS]}>
+    <ProtectedRoute allowedProfiles={[TipoPerfil.CHEFE_MEDICOS]}>
       <div className="space-y-6">
         {/* Header */}
         <div>
