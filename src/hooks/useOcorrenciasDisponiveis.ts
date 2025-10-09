@@ -118,8 +118,9 @@ export function useOcorrenciasDisponiveis(
 
         const jaConfirmado = participacaoProfissional?.confirmado === true;
 
-        if (jaConfirmado && ocorrencia.status_ocorrencia === 'CONFIRMADA') {
-          // Profissional confirmado E ocorrência com status CONFIRMADA (todas as vagas preenchidas)
+        // Se o profissional já confirmou participação, mostrar em "Confirmadas"
+        // INDEPENDENTE do status da ocorrência (EM_ABERTO ou CONFIRMADA)
+        if (jaConfirmado) {
           confirmadas.push({
             id: ocorrencia.id,
             numero_ocorrencia: ocorrencia.numero_ocorrencia,
@@ -130,6 +131,7 @@ export function useOcorrenciasDisponiveis(
             horario_no_local: ocorrencia.horario_chegada_local,
             horario_termino: ocorrencia.horario_termino,
             local_ocorrencia: ocorrencia.local_ocorrencia,
+            // IMPORTANTE: Manter o status REAL da ocorrência do banco
             status: ocorrencia.status_ocorrencia as 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA',
             profissional_confirmado: true,
           });
