@@ -30,6 +30,307 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.5] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Problema 1: Mapa do Mapbox Permanece em Branco Após Configurar Token**
+
+**Causa Identificada:**
+- Import incorreto: `react-map-gl/mapbox` ao invés de `react-map-gl`
+- Falta de configuração do `mapboxgl.accessToken` global
+- Falta de prop `reuseMaps` para otimização
+- Declaração de tipos do react-map-gl ausente
+
+**Solução Implementada:**
+
+1. **Correção de Imports** (`MapaRastreamento.tsx`)
+   - Alterado de `react-map-gl/mapbox` para `react-map-gl`
+   - Adicionado import direto de `mapboxgl` para configuração global
+   - Configuração do `mapboxgl.accessToken` no nível do módulo
+
+2. **Otimização do Componente Map**
+   - Adicionado prop `reuseMaps` para reutilização de instâncias
+   - Explicitação de `longitude` e `latitude` em `initialViewState`
+   - Logs de debug para verificar carregamento do token
+
+3. **Declaração de Tipos TypeScript** (`src/types/react-map-gl.d.ts`)
+   - Criado arquivo de tipos customizado para react-map-gl@8.x
+   - Declarações para Map, Marker, Popup, NavigationControl, FullscreenControl
+   - Interfaces completas com todas as props necessárias
+   - Evita conflitos com @types/react-map-gl antigos
+
+**Problema 2: Loop Infinito de "Verificando Permissões..." Após Reload**
+
+**Causa Identificada:**
+- `isInitialized` não era resetado para `false` no logout
+- `AuthProvider` tinha dependências no `useEffect` causando re-renders infinitos
+- `onAuthStateChange` fazia fetch de dados do usuário, causando loops
+- Evento `SIGNED_IN` recarregava usuário desnecessariamente
+
+**Solução Implementada:**
+
+1. **Correção do Logout** (`authStore.ts:63`)
+   - Resetar `isInitialized` para `false` ao fazer logout
+   - Garantir estado limpo para próximo login
+   - Prevenir ciclo de inicialização quebrado
+
+2. **Otimização do AuthProvider** (`AuthProvider.tsx:77`)
+   - Removido `initializeAuth` e `setUser` das dependências do useEffect
+   - Array de dependências vazio `[]` para executar apenas 1 vez
+   - Prevenir re-renders infinitos causados por mudanças no store
+
+3. **Simplificação do onAuthStateChange** (`AuthProvider.tsx:41-48`)
+   - Removido fetch de dados do usuário no evento `SIGNED_IN`
+   - Evento `TOKEN_REFRESHED` apenas loga, não atualiza estado
+   - `SIGNED_OUT` continua limpando o usuário
+   - Redução de chamadas desnecessárias ao Supabase
+
+**Arquivos Modificados:**
+- `src/components/rastreamento/MapaRastreamento.tsx:4-19,58-62,166-170,215-222,242` - Correções do Mapbox
+- `src/stores/authStore.ts:63` - Reset de isInitialized no logout
+- `src/components/providers/AuthProvider.tsx:41-48,77` - Otimização de re-renders
+- `src/types/react-map-gl.d.ts` - Novo arquivo de tipos
+
+**Decisões Técnicas:**
+- Usar tipos customizados → react-map-gl@8.x tem types embutidos conflitantes
+- `mapboxgl.accessToken` global → Necessário para inicialização correta
+- `reuseMaps` → Melhora performance em navegações
+- Array vazio de dependências → Prevenir loops de inicialização
+- Remover fetch no SIGNED_IN → Usuário já está persistido no store
+
+**Impacto:**
+- ✅ Mapa do Mapbox carrega corretamente
+- ✅ Eliminação total do loop de "Verificando permissões..."
+- ✅ TypeScript sem erros
+- ✅ Performance melhorada (menos re-renders)
+- ✅ Autenticação mais confiável
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
+## [0.18.4] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Problema: Tela Presa em "Verificando permissões..." Após Reload**
+
+**Causa Identificada:**
+- `isInitialized` não era persistido no localStorage
+- Zustand `partialize` salvava apenas `user`, não `isInitialized`
+- A cada reload, `isInitialized` voltava para `false`
+- Sistema ficava aguardando inicialização que nunca completava
+- Problema pior em rotas inexistentes (404) que usam ProtectedRoute
+
+**Solução Implementada:**
+
+1. **Otimização da Inicialização** (`authStore.ts`)
+   - Lógica inteligente de inicialização em 3 etapas:
+     1. Se já inicializado → Skip
+     2. Se tem `user` persistido → Marcar como inicializado (rápido)
+     3. Se não tem → Buscar do Supabase (lento)
+   - Logs de debug para cada caso
+   - Evita chamadas desnecessárias ao Supabase
+
+2. **Timeout de Segurança** (`ProtectedRoute.tsx`)
+   - Timeout de 5 segundos para loading
+   - Se exceder, redireciona automaticamente para `/login`
+   - Mensagem visual de "Tempo limite excedido"
+   - Previne usuário ficar preso indefinidamente
+
+3. **Melhor Feedback Visual**
+   - Mensagem de timeout exibida antes do redirect
+   - Logs de warning no console para debug
+   - Estado `loadingTimeout` para controle
+
+**Arquivos Modificados:**
+- `src/stores/authStore.ts:69-95` - Lógica de inicialização otimizada
+- `src/components/auth/ProtectedRoute.tsx:3,36,44-55,87-91` - Timeout de segurança
+
+**Decisões Técnicas:**
+- Não persistir `isInitialized` → Evita cache stale
+- Validar presença de `user` persistido → Inicialização instantânea
+- Timeout de 5s → Equilíbrio entre espera e UX
+- Logs detalhados → Facilitar diagnóstico
+
+**Fluxo Otimizado:**
+```
+Reload da página
+  ├─ Zustand restaura `user` do localStorage
+  ├─ initializeAuth() verifica se tem `user`
+  ├─ Se SIM: marca isInitialized=true (instantâneo)
+  └─ Se NÃO: busca do Supabase (lento)
+```
+
+**Impacto:**
+- ✅ Inicialização **instantânea** quando usuário está logado
+- ✅ Timeout previne tela presa indefinidamente
+- ✅ Melhor experiência em rotas 404
+- ✅ Logs ajudam no troubleshooting
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
+## [0.18.3] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Problema: Loop Infinito de "Verificando permissões..."**
+
+**Causa Identificada:**
+- Duplicação de listeners `onAuthStateChange` do Supabase
+- Listener no `authStore.ts:79` dentro de `initializeAuth()`
+- Listener no `AuthProvider.tsx:36` no useEffect
+- Dois listeners causavam atualizações de estado em cascata
+- Re-renderizações infinitas no `ProtectedRoute`
+
+**Solução Implementada:**
+
+1. **Remoção de Listener Duplicado**
+   - Removido `onAuthStateChange` de `authStore.ts`
+   - Mantido apenas o listener no `AuthProvider.tsx`
+   - Centralização do gerenciamento de estado de autenticação
+   - Comentário explicativo no código
+
+2. **Otimização do ProtectedRoute**
+   - Adicionado `useMemo` para calcular permissões
+   - Evita recálculo desnecessário a cada render
+   - Dependências otimizadas (apenas `user?.tipo_perfil` e `allowedProfiles`)
+   - Redução de chamadas à função `hasPermission`
+
+3. **Logs de Debug**
+   - Adicionado log de inicialização no `AuthProvider`
+   - Facilita diagnóstico de problemas futuros
+   - Console mostra fluxo de autenticação
+
+**Arquivos Modificados:**
+- `src/stores/authStore.ts:78-80` - Removido listener duplicado
+- `src/components/auth/ProtectedRoute.tsx:3,38-41,56,64,84` - Otimização com useMemo
+- `src/components/providers/AuthProvider.tsx:31` - Log de debug
+
+**Decisões Técnicas:**
+- Centralizar listeners no Provider → Evita duplicação e conflitos
+- useMemo para permissões → Performance e prevenir loops
+- Logs de debug estratégicos → Facilitar troubleshooting futuro
+- Manter validação de `isInitialized` → Evitar race conditions
+
+**Impacto:**
+- ✅ Eliminação do loop infinito
+- ✅ Melhoria de performance (menos renders)
+- ✅ Melhor debugabilidade
+- ✅ Código mais limpo e organizado
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
+## [0.18.2] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Problema: Mapa de Rastreamento em Branco no Vercel**
+
+**Causa Identificada:**
+- Variável de ambiente `NEXT_PUBLIC_MAPBOX_TOKEN` não configurada no Vercel
+- Token sendo lido como `undefined` em produção
+- Arquivo `.env.local` não é enviado para o Vercel por segurança
+
+**Solução Implementada:**
+
+1. **Validação de Token com Feedback Visual**
+   - Adicionada validação de token antes de renderizar o mapa
+   - Tela de erro customizada com instruções claras
+   - Instruções passo a passo para configurar no Vercel
+   - Ícone visual de alerta (fundo vermelho)
+   - Link para documentação completa
+
+2. **Documentação Expandida** (`MAPBOX_SETUP.md`)
+   - Seção dedicada para configuração no Vercel
+   - Passo a passo detalhado com screenshots textuais
+   - Checklist de verificação pós-deploy
+   - Troubleshooting específico para Vercel
+   - Diferenciação entre ambiente local e produção
+
+3. **Melhorias de UX**
+   - Mensagem de erro amigável e informativa
+   - Código destacado visualmente (tags `<code>`)
+   - Lista numerada de ações necessárias
+   - Alerta sobre necessidade de redeploy
+
+**Arquivos Modificados:**
+- `src/components/rastreamento/MapaRastreamento.tsx:39,55-84` - Validação de token e tela de erro
+- `MAPBOX_SETUP.md:41-77,95-126` - Seções sobre Vercel e troubleshooting
+
+**Como Resolver no Vercel:**
+1. Dashboard do Vercel → Settings → Environment Variables
+2. Adicionar: `NEXT_PUBLIC_MAPBOX_TOKEN` com o valor do token
+3. Selecionar todos os ambientes (Production, Preview, Development)
+4. Fazer **Redeploy** obrigatório
+5. Aguardar build completar (~2-3 minutos)
+6. Testar a página `/chefe-medicos/rastreamento`
+
+**Decisões Técnicas:**
+- Removido fallback `'pk.your-mapbox-token-here'` → Token deve ser explícito
+- Validação early return → Evita erros silenciosos do Mapbox
+- Feedback visual destacado → Usuário sabe exatamente o que fazer
+- Documentação expandida → Prevenção de problemas futuros
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
+## [0.18.1] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Erro de Acessibilidade em Modal**
+- Corrigido erro de console no `AmbulanciaDetalhesModal`
+- Adicionado `DialogTitle` no estado de loading
+- Componente agora está acessível para screen readers
+- Conformidade com Radix UI Dialog primitives
+
+**Arquivo Modificado:**
+- `src/components/ambulancias/AmbulanciaDetalhesModal.tsx:133-135` - Adicionado DialogHeader com DialogTitle no estado de loading
+
+**Decisões Técnicas:**
+- Mantido título descritivo "Carregando detalhes da ambulância..." → Feedback claro para usuários de tecnologia assistiva
+- Verificados todos os outros modais do sistema → Todos já possuem DialogTitle correto
+
+**Modais Verificados (✅ OK):**
+- `CadastrarAmbulanciaModal` - Tem DialogTitle
+- `AdicionarNotaModal` - Tem DialogTitle
+- `OcorrenciaDetalhesModal` - Tem DialogTitle
+- `PacienteHistoricoModal` - Tem DialogTitle
+- `ProntuarioModal` - Tem DialogTitle
+
+---
+
 ## [0.17.0] - 2025-10-09
 
 ### ✅ Adicionado

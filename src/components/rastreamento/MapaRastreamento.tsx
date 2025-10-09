@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Map, { Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
+import Map, { Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl';
+import mapboxgl from 'mapbox-gl';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { Ambulance, MapPin, Clock } from 'lucide-react';
@@ -10,6 +11,12 @@ import { TipoPerfil } from '@/types';
 import { OcorrenciaDetalhesModal } from '@/components/ocorrencias/OcorrenciaDetalhesModal';
 import { useRastreamentoRealtime } from '@/hooks/useRastreamentoRealtime';
 import 'mapbox-gl/dist/mapbox-gl.css';
+
+// CORREÇÃO: Configurar token global do Mapbox
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+if (MAPBOX_TOKEN) {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+}
 
 interface AmbulanciaAtiva {
   id: number;
@@ -34,9 +41,6 @@ interface MapaRastreamentoProps {
   ambulanciaSelecionada: number | null;
   onSelecionarAmbulancia: (id: number | null) => void;
 }
-
-// Configuração do Mapbox Token
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.your-mapbox-token-here';
 
 // Centro padrão (Brasil - São Paulo)
 const DEFAULT_CENTER = { longitude: -46.6333, latitude: -23.5505 };
@@ -159,6 +163,44 @@ export function MapaRastreamento({
     setPopupInfo(null);
   }, []);
 
+  // Debug: Verificar token
+  useEffect(() => {
+    console.log('[MapaRastreamento] Mapbox token:', MAPBOX_TOKEN ? 'Configurado ✓' : 'NÃO CONFIGURADO ✗');
+    console.log('[MapaRastreamento] Token length:', MAPBOX_TOKEN?.length || 0);
+  }, []);
+
+  // Validar token do Mapbox
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'pk.your-mapbox-token-here') {
+    return (
+      <div className="w-full h-[600px] bg-red-50 rounded-lg flex items-center justify-center border-2 border-red-200">
+        <div className="text-center max-w-md p-6">
+          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <MapPin className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-red-900 mb-2">
+            Token do Mapbox não configurado
+          </h3>
+          <p className="text-sm text-red-700 mb-4">
+            A variável de ambiente <code className="bg-red-100 px-2 py-1 rounded">NEXT_PUBLIC_MAPBOX_TOKEN</code> não está configurada.
+          </p>
+          <div className="bg-white rounded-lg p-4 text-left text-sm text-gray-700 border border-red-200">
+            <p className="font-medium mb-2">Para configurar no Vercel:</p>
+            <ol className="list-decimal list-inside space-y-1 text-xs">
+              <li>Acesse o dashboard do Vercel</li>
+              <li>Vá em Settings → Environment Variables</li>
+              <li>Adicione: <code className="bg-gray-100 px-1">NEXT_PUBLIC_MAPBOX_TOKEN</code></li>
+              <li>Cole seu token do Mapbox</li>
+              <li>Faça redeploy do projeto</li>
+            </ol>
+          </div>
+          <p className="text-xs text-red-600 mt-3">
+            Consulte <code>MAPBOX_SETUP.md</code> para mais informações
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="w-full h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
@@ -176,12 +218,14 @@ export function MapaRastreamento({
         <Map
           ref={mapRef}
           initialViewState={{
-            ...DEFAULT_CENTER,
+            longitude: DEFAULT_CENTER.longitude,
+            latitude: DEFAULT_CENTER.latitude,
             zoom: DEFAULT_ZOOM,
           }}
           mapStyle="mapbox://styles/mapbox/streets-v12"
           mapboxAccessToken={MAPBOX_TOKEN}
           style={{ width: '100%', height: '100%' }}
+          reuseMaps
         >
           {/* Controles de Navegação */}
           <NavigationControl position="top-right" />
@@ -195,7 +239,7 @@ export function MapaRastreamento({
                 longitude={ambulancia.rastreamento.longitude}
                 latitude={ambulancia.rastreamento.latitude}
                 anchor="bottom"
-                onClick={(e) => {
+                onClick={(e: any) => {
                   e.originalEvent.stopPropagation();
                   setPopupInfo(ambulancia);
                   onSelecionarAmbulancia(ambulancia.id);

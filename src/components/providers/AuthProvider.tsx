@@ -28,9 +28,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Inicializar autenticação quando o app carrega
+    console.log('[AuthProvider] Initializing authentication...');
     initializeAuth();
 
     // CORREÇÃO: Listener de mudanças no estado de autenticação
+    // Removido fetching de dados do usuário para evitar loops
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -38,19 +40,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (event === 'SIGNED_OUT') {
         setUser(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Buscar dados atualizados do usuário
-        if (session?.user?.email) {
-          const { data: userData } = await supabase
-            .from('usuarios')
-            .select('*')
-            .ilike('email', session.user.email)
-            .single();
-
-          if (userData) {
-            setUser(userData);
-          }
-        }
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('[AuthProvider] Token refreshed successfully');
+        // Não fazer nada - usuário já está no store
       } else if (event === 'PASSWORD_RECOVERY') {
         console.log('[AuthProvider] Password recovery initiated');
       }
@@ -71,8 +63,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.error('[AuthProvider] Error refreshing session:', error);
             // Se falhar o refresh, fazer logout
             setUser(null);
-          } else {
-            console.log('[AuthProvider] Session refreshed successfully');
           }
         }
       },
@@ -84,7 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe();
       clearInterval(refreshInterval);
     };
-  }, [initializeAuth, setUser]);
+  }, []); // CORREÇÃO: Remover dependências para evitar re-renders
 
   return <>{children}</>;
 }
