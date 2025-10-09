@@ -5,6 +5,82 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.15.0] - 2025-10-08
+
+### ✅ Adicionado
+
+#### FASE 8.1 - Banco de Dados de Ocorrências (Chefe dos Médicos)
+
+**Página de Banco de Dados** (`src/app/(dashboard)/chefe-medicos/ocorrencias/page.tsx`)
+- Página exclusiva do Chefe dos Médicos para visualizar todas as ocorrências
+- Proteção de rota com `ProtectedRoute` para perfil `CHEFE_MEDICOS`
+- Info card explicativo sobre ordenação
+- Integração com modal de detalhes ao clicar em "Ver Detalhes"
+- Layout responsivo
+
+**Componente OcorrenciasTable** (`src/components/ocorrencias/OcorrenciasTable.tsx`)
+- Tabela completa com todas as ocorrências do sistema
+- **Colunas:**
+  - Número da ocorrência (formato: `OCYYYYMM0001`)
+  - Status (badge colorido)
+  - Tipo de trabalho (Evento, Emergência, etc.)
+  - Tipo de ambulância (Básica, Emergência)
+  - Data e horário de saída
+  - Local da ocorrência
+  - Placa da ambulância (se atribuída)
+  - Botão "Ver Detalhes"
+
+**Filtros Avançados**
+- **Busca por texto:** Filtra por número de ocorrência ou local
+- **Filtro de status:** Todos / Em Aberto / Confirmada / Em Andamento / Concluída / Cancelada
+- **Filtro de tipo de trabalho:** Todos / Evento / Emergência / Domiciliar / Transferência
+- **Filtro de tipo de ambulância:** Todas / Básica / Emergência
+- Contador de resultados filtrados
+
+**Ordenação Inteligente**
+- Ocorrências em andamento aparecem primeiro (prioridade máxima)
+- Depois ocorrências confirmadas
+- Demais ordenadas por data decrescente
+
+**Destaque Visual por Status**
+- **Em Andamento:** Fundo verde claro (`bg-green-50 hover:bg-green-100`)
+- **Confirmada:** Fundo azul claro (`bg-blue-50 hover:bg-blue-100`)
+- **Demais:** Fundo branco com hover cinza claro
+
+**Paginação**
+- 20 itens por página
+- Navegação anterior/próximo
+- Indicador de página atual e total
+- Reset para página 1 ao alterar filtros
+
+**Estados de UI**
+- Loading state com spinner
+- Empty state quando não há ocorrências
+- Empty state quando filtros não retornam resultados
+- Mensagens contextuais
+
+**Performance**
+- React Query com cache de 5 minutos
+- Query otimizada com join em `ambulancias`
+- Filtros client-side para resposta instantânea
+
+### 📝 Arquivos Criados
+- `src/components/ocorrencias/OcorrenciasTable.tsx` - Tabela reutilizável (438 linhas)
+- `src/app/(dashboard)/chefe-medicos/ocorrencias/page.tsx` - Página principal (73 linhas)
+
+### 📝 Arquivos Modificados
+- Nenhum (apenas adições)
+
+### 🎯 Fluxo Completo Implementado
+
+1. **Chefe dos Médicos acessa** `/chefe-medicos/ocorrencias`
+2. **Visualiza tabela** com todas as ocorrências ordenadas (ativas no topo)
+3. **Aplica filtros** para encontrar ocorrências específicas
+4. **Clica em "Ver Detalhes"** para ver informações completas no modal
+5. **Navega entre páginas** se houver mais de 20 resultados
+
+---
+
 ## [0.14.1] - 2025-10-08
 
 ### 🔧 Corrigido
