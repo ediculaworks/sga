@@ -296,9 +296,11 @@ export const ocorrenciasService = {
 
       if (vagasError) {
         console.error('Erro ao criar vagas:', vagasError);
+        console.error('Detalhes do erro:', JSON.stringify(vagasError, null, 2));
+        console.error('Vagas que tentamos inserir:', JSON.stringify(vagas, null, 2));
         // Tentar deletar a ocorrência criada
         await supabase.from('ocorrencias').delete().eq('id', ocorrencia.id);
-        throw new Error('Erro ao criar vagas da ocorrência');
+        throw new Error(`Erro ao criar vagas da ocorrência: ${vagasError.message || vagasError.code}`);
       }
 
       return {
