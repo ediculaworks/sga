@@ -30,6 +30,79 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.6] - 2025-10-09
+
+### 🐛 Corrigido
+
+**Problema: Loop de "Verificando Permissões..." em Rotas 404**
+
+**Causa Identificada:**
+- Rotas inexistentes dentro de `(dashboard)` tentavam renderizar o layout
+- Layout carregava Sidebar e Header que usam hooks de autenticação
+- ProtectedRoute não estava preparado para rotas 404
+- Next.js não tinha páginas `not-found.tsx` customizadas
+- Loop infinito de verificação de permissões em páginas inexistentes
+
+**Solução Implementada:**
+
+1. **Página 404 do Dashboard** (`src/app/(dashboard)/not-found.tsx`)
+   - Página customizada para rotas 404 dentro do dashboard
+   - Não usa ProtectedRoute (evita loops)
+   - Usa apenas `useAuth` (mais leve)
+   - Loading state apropriado
+   - Botão "Voltar" e "Ir para o Dashboard"
+   - Detecção automática do perfil do usuário
+   - Redirecionamento inteligente para dashboard correto
+
+2. **Página 404 Global** (`src/app/not-found.tsx`)
+   - Página para rotas 404 fora do dashboard
+   - Design consistente com tema do projeto
+   - Link direto para login
+   - Sem dependências de autenticação
+
+3. **Funcionalidades da Página 404:**
+   - Ícone visual de "Página não encontrada"
+   - Mensagem clara e amigável
+   - Botões de ação (Voltar / Dashboard / Login)
+   - Responsivo (mobile/desktop)
+   - Link para login se não autenticado
+
+**Arquivos Criados:**
+- `src/app/(dashboard)/not-found.tsx` - 404 do dashboard (95 linhas)
+- `src/app/not-found.tsx` - 404 global (50 linhas)
+
+**Decisões Técnicas:**
+- Não usar ProtectedRoute em páginas 404 → Evita loops infinitos
+- useAuth direto → Acesso mais leve ao estado de autenticação
+- Páginas separadas (dashboard vs global) → Melhor UX por contexto
+- redirectToDashboard → Redireciona para dashboard correto do perfil
+
+**Fluxo Corrigido:**
+```
+Usuário acessa /medico/profissionais (não existe)
+  ├─ Next.js renderiza not-found.tsx do (dashboard)
+  ├─ Página 404 verifica autenticação (sem ProtectedRoute)
+  ├─ Exibe opções de navegação
+  └─ Usuário clica "Ir para o Dashboard"
+       └─ Redirecionado para /medico (dashboard correto)
+```
+
+**Impacto:**
+- ✅ Eliminado loop de "Verificando permissões..." em rotas 404
+- ✅ Melhor UX com páginas de erro customizadas
+- ✅ Navegação clara em caso de erro
+- ✅ Performance melhorada (sem loops infinitos)
+
+### ⏭️ Próximo Passo
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
 ## [0.18.5] - 2025-10-09
 
 ### 🐛 Corrigido

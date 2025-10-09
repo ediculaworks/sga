@@ -36,7 +36,8 @@
       "Bash(grep:*)",
       "Bash(git merge:*)",
       "Bash(git restore:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
