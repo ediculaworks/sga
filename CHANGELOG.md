@@ -5,6 +5,48 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.14.1] - 2025-10-08
+
+### 🔧 Corrigido
+
+#### Melhorias no Formulário de Criação de Ocorrências
+
+**Inputs de Data e Hora com Máscaras Automáticas**
+- Removidos inputs HTML5 type="date" e type="time"
+- Implementados inputs type="text" com máscaras automáticas
+- **Máscara de data:** `15122025` → `15/12/2025`
+- **Máscara de hora:** `1430` → `14:30`
+- Validação Zod aceita formato `DD/MM/YYYY` e converte para `YYYY-MM-DD`
+- Validação de horário flexível aceita formatos variados
+- Corrigidos problemas de "invalid value" e cores erradas
+
+**Ajustes no Formulário**
+- Removidos campos de latitude e longitude (GPS)
+- Restrição de inputs numéricos em valores de pagamento
+- Apenas números, vírgula e ponto permitidos
+
+**Scripts SQL para Permissões RLS**
+- `supabase/migrations/fix-ocorrencias-permissions.sql` - Políticas RLS completas
+- `supabase/migrations/disable-rls-temporarily.sql` - Script de diagnóstico
+- Adicionadas permissões em sequences: `ocorrencias_id_seq`, `ocorrencias_participantes_id_seq`
+- Políticas RLS para: `ocorrencias`, `ocorrencias_participantes`, `ambulancias`, `estoque_ambulancias`
+
+### 📝 Arquivos Modificados
+- `src/lib/validations/ocorrencia.ts` - Validação de datas DD/MM/YYYY e transformação
+- `src/components/ocorrencias/CriarOcorrenciaForm.tsx` - Máscaras automáticas em inputs
+- `src/lib/services/ocorrencias.ts` - Removidos campos de GPS
+
+### 📝 Arquivos Criados
+- `supabase/migrations/fix-ocorrencias-permissions.sql` - Correção de permissões RLS
+- `supabase/migrations/disable-rls-temporarily.sql` - Script de diagnóstico
+
+### ⚠️ Problemas Conhecidos
+- Erros de permissão RLS persistem mesmo após execução dos scripts SQL
+- Criação de ocorrências ainda retorna erros 400/403
+- Será revisado em etapa futura após implementação da FASE 8
+
+---
+
 ## [0.14.0] - 2025-10-08
 
 ### ✅ Adicionado
