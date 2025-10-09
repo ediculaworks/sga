@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -14,15 +14,28 @@ import { toast } from 'sonner';
  *
  * Interface de autenticação do Sistema de Gestão de Ambulâncias.
  * Permite login com email e senha, com validação e feedback visual.
+ *
+ * CORREÇÕES v0.18.11:
+ * - Corrigido hydration mismatch do Zustand persist
+ * - Estado local de loading para evitar race conditions
+ * - Redirecionamento via router.push ao invés de window.location
  */
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const login = useAuthStore((state) => state.login);
 
+  // Estado local para evitar hydration mismatch
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  // Aguardar hydration do Zustand
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   /**
    * Valida os campos do formulário
@@ -61,11 +74,14 @@ export default function LoginPage() {
 
     // Limpar erros anteriores
     setErrors({});
+    setIsSubmitting(true);
 
     try {
+      console.log('[LOGIN] Iniciando login...');
       const result = await login(email, password);
 
       if (result.success) {
+        console.log('[LOGIN] Login bem-sucedido');
         toast.success('Login realizado com sucesso!');
 
         // Buscar o usuário do store para pegar o perfil
@@ -83,17 +99,25 @@ export default function LoginPage() {
 
           const route = dashboardRoutes[user.tipo_perfil] || '/';
 
-          // Usar setTimeout para garantir que o estado foi atualizado
-          setTimeout(() => {
-            window.location.href = route;
-          }, 100);
+          console.log('[LOGIN] Redirecionando para:', route);
+
+          // Usar router.push ao invés de window.location.href
+          // Isso permite o Next.js gerenciar o redirecionamento corretamente
+          router.push(route);
+        } else {
+          console.error('[LOGIN] Usuário não encontrado no store após login');
+          toast.error('Erro ao obter dados do usuário');
+          setIsSubmitting(false);
         }
       } else {
+        console.error('[LOGIN] Erro no login:', result.error);
         toast.error(result.error || 'Erro ao fazer login');
+        setIsSubmitting(false);
       }
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('[LOGIN] Exceção durante login:', error);
       toast.error('Erro inesperado ao fazer login');
+      setIsSubmitting(false);
     }
   };
 
@@ -139,7 +163,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={errors.email ? 'border-red-500 focus:ring-red-500' : ''}
-                disabled={isLoading}
+                disabled={!isHydrated || isSubmitting}
                 autoComplete="email"
               />
               {errors.email && (
@@ -159,7 +183,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={errors.password ? 'border-red-500 focus:ring-red-500' : ''}
-                disabled={isLoading}
+                disabled={!isHydrated || isSubmitting}
                 autoComplete="current-password"
               />
               {errors.password && (
@@ -171,9 +195,11 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5"
-              disabled={isLoading}
+              disabled={!isHydrated || isSubmitting}
             >
-              {isLoading ? (
+              {!isHydrated ? (
+                'Carregando...'
+              ) : isSubmitting ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"

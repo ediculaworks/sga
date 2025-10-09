@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase/client';
 
@@ -15,6 +16,10 @@ import { supabase } from '@/lib/supabase/client';
  * - Atualiza o store quando houver mudanças
  * - Faz refresh automático do token a cada 50 minutos
  *
+ * CORREÇÃO v0.18.11:
+ * - NÃO escuta eventos durante o login para evitar race conditions
+ * - Página de login gerencia seu próprio estado
+ *
  * NOTA: A partir da v0.18.10, não há mais "inicialização assíncrona" do estado.
  * O middleware já garante que apenas usuários autenticados acessem rotas protegidas.
  */
@@ -24,9 +29,20 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const pathname = usePathname();
   const setUser = useAuthStore((state) => state.setUser);
 
+  // Verificar se estamos na página de login
+  const isLoginPage = pathname === '/login';
+
   useEffect(() => {
+    // NÃO escutar eventos na página de login
+    // O login gerencia seu próprio estado para evitar race conditions
+    if (isLoginPage) {
+      console.log('[AuthProvider] Página de login detectada - listeners desativados');
+      return;
+    }
+
     // Listener de mudanças no estado de autenticação
     const {
       data: { subscription },
@@ -36,8 +52,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (event === 'SIGNED_OUT') {
         // Limpar usuário do store ao fazer logout
         setUser(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Atualizar dados do usuário quando houver login ou refresh de token
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Atualizar dados do usuário quando refresh de token
         if (session?.user?.email) {
           const { data: userData } = await supabase
             .from('usuarios')
@@ -50,6 +66,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
       }
+      // REMOVIDO: Evento SIGNED_IN
+      // A página de login já gerencia isso diretamente
     });
 
     // Refresh automático de token a cada 50 minutos (token expira em 60min)
@@ -77,7 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe();
       clearInterval(refreshInterval);
     };
-  }, [setUser]);
+  }, [isLoginPage, setUser]);
 
   return <>{children}</>;
 }

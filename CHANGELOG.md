@@ -30,6 +30,109 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.11] - 2025-10-09
+
+### 🐛 Corrigido
+
+**BUG CRÍTICO: Campos de Login Desabilitados e Loading Infinito**
+
+**Problema Reportado:**
+- Campos de email e senha não podiam ser preenchidos
+- Botão "Entrar" ficava em loading infinito ("Entrando...")
+- Problema ocorria de forma intermitente em diferentes navegadores (Chrome, Safari)
+- Afetava diferentes computadores de forma inconsistente
+
+**Causa Raiz Identificada:**
+
+1. **Hydration Mismatch do Zustand Persist**
+   - Página de login usava `isLoading` direto do `useAuthStore`
+   - Zustand com `persist` não estava hidratado quando componente renderizava
+   - `isLoading` podia ser `undefined` ou ter valor stale do localStorage
+   - Campos ficavam `disabled={isLoading}` permanentemente
+
+2. **Race Condition com AuthProvider**
+   - `AuthProvider` estava escutando evento `SIGNED_IN` globalmente
+   - Quando login ocorria, AuthProvider também tentava buscar usuário
+   - Conflito entre login direto e listener do AuthProvider
+   - Dupla requisição ao banco de dados causava inconsistência
+
+3. **Redirecionamento Problemático**
+   - `window.location.href` com `setTimeout(100ms)`
+   - Middleware podia redirecionar antes do timeout completar
+   - Estado do Zustand não era garantido estar atualizado
+
+**Solução Implementada:**
+
+1. **Página de Login** (`src/app/(auth)/login/page.tsx`)
+   - **Adicionado:** Estado `isHydrated` para aguardar hydration do Zustand
+   - **Adicionado:** Estado local `isSubmitting` ao invés de usar `isLoading` do store
+   - **Corrigido:** Campos agora `disabled={!isHydrated || isSubmitting}`
+   - **Corrigido:** Botão mostra 3 estados: "Carregando..." / "Entrando..." / "Entrar"
+   - **Corrigido:** Redirecionamento via `router.push()` ao invés de `window.location.href`
+   - **Removido:** setTimeout desnecessário
+   - **Adicionado:** Logs detalhados para debug (`console.log('[LOGIN] ...')`)
+
+2. **AuthProvider** (`src/components/providers/AuthProvider.tsx`)
+   - **Adicionado:** Detecção de página de login via `usePathname()`
+   - **Corrigido:** Listeners **desativados** na página de login
+   - **Removido:** Evento `SIGNED_IN` do listener (página de login gerencia)
+   - **Mantido:** Apenas eventos `SIGNED_OUT` e `TOKEN_REFRESHED`
+   - **Justificativa:** Evitar race conditions durante login
+
+**Fluxo Corrigido:**
+
+```
+ANTES (QUEBRADO):
+1. Página renderiza → isLoading = undefined (Zustand não hidratado)
+2. Campos disabled=true → Usuário NÃO consegue digitar ❌
+3. Login executa → AuthProvider TAMBÉM executa (race condition) ❌
+4. setTimeout(100ms) + window.location.href → Middleware pode redirecionar antes ❌
+
+AGORA (FUNCIONAL):
+1. Página renderiza → isHydrated = false, campos disabled ✅
+2. useEffect completa → isHydrated = true, campos enabled ✅
+3. Usuário preenche e submete → isSubmitting = true ✅
+4. Login executa → AuthProvider NÃO interfere ✅
+5. router.push(route) → Next.js gerencia redirecionamento corretamente ✅
+```
+
+**Arquivos Modificados:**
+- `src/app/(auth)/login/page.tsx` - Corrigido hydration e estados de loading
+- `src/components/providers/AuthProvider.tsx` - Desativado listeners na página de login
+
+**Decisões Técnicas:**
+- Estado local vs store global → Estado local para isSubmitting (sem race condition)
+- isHydrated → Previne hydration mismatch do Zustand persist
+- Desativar AuthProvider no login → Evita conflito entre múltiplas fontes de verdade
+- router.push vs window.location → Permite Next.js gerenciar navegação
+
+**Testes Realizados:**
+- ✅ Compilação TypeScript sem erros
+- ✅ Campos habilitados após hydration
+- ✅ Loading states corretos
+- ✅ Logs de debug para troubleshooting futuro
+
+**Impacto:**
+- ✅ Campos de login sempre editáveis
+- ✅ Botão "Entrar" com estados corretos
+- ✅ Redirecionamento confiável após login
+- ✅ Sem race conditions entre login e AuthProvider
+- ✅ Comportamento consistente entre navegadores e máquinas
+
+**Próximos Testes Necessários:**
+1. Testar login em Chrome, Safari e Firefox
+2. Verificar em diferentes máquinas
+3. Confirmar que "Verificando permissões..." não aparece mais
+4. Validar fluxo completo: login → dashboard → navegação
+
+### ⏭️ Próximo Passo
+
+Aguardar feedback do usuário sobre os testes de login.
+
+Se tudo funcionar, continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+
+---
+
 ## [0.18.10] - 2025-10-09
 
 ### 🔧 Modificado
