@@ -438,7 +438,7 @@ export function OcorrenciaDetalhesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Briefcase className="w-5 h-5 text-blue-600" />
@@ -499,7 +499,7 @@ export function OcorrenciaDetalhesModal({
                 <p className="text-sm text-gray-600 mb-2 font-medium">
                   Descrição
                 </p>
-                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border break-words overflow-wrap-anywhere">
+                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border break-words overflow-wrap-anywhere whitespace-pre-wrap max-w-full">
                   {ocorrencia.descricao}
                 </p>
               </div>
@@ -511,11 +511,11 @@ export function OcorrenciaDetalhesModal({
                 <MapPin className="w-4 h-4" />
                 Local da Ocorrência
               </p>
-              <p className="text-gray-900 font-medium break-words">
+              <p className="text-gray-900 font-medium break-words max-w-full">
                 {ocorrencia.local_ocorrencia}
               </p>
               {ocorrencia.endereco_completo && (
-                <p className="text-gray-600 text-sm mt-1 break-words">
+                <p className="text-gray-600 text-sm mt-1 break-words max-w-full">
                   {ocorrencia.endereco_completo}
                 </p>
               )}
