@@ -18,7 +18,10 @@ import { toast } from 'sonner';
  * CORREÇÕES v0.18.11:
  * - Corrigido hydration mismatch do Zustand persist
  * - Estado local de loading para evitar race conditions
- * - Redirecionamento via router.push ao invés de window.location
+ *
+ * CORREÇÕES v0.18.12:
+ * - Redirecionamento via window.location.href para garantir propagação da sessão no Vercel
+ * - router.push() não esperava sessão propagar, causando loop de login
  */
 
 export default function LoginPage() {
@@ -101,9 +104,10 @@ export default function LoginPage() {
 
           console.log('[LOGIN] Redirecionando para:', route);
 
-          // Usar router.push ao invés de window.location.href
-          // Isso permite o Next.js gerenciar o redirecionamento corretamente
-          router.push(route);
+          // CORREÇÃO v0.18.12: Usar window.location.href no Vercel
+          // router.push() não espera a sessão propagar no middleware
+          // window.location.href força reload completo com sessão atualizada
+          window.location.href = route;
         } else {
           console.error('[LOGIN] Usuário não encontrado no store após login');
           toast.error('Erro ao obter dados do usuário');
