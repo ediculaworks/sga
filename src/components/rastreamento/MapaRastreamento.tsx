@@ -16,11 +16,12 @@ import dynamic from 'next/dynamic';
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 // Componentes do Mapbox carregados dinamicamente (apenas no cliente)
-const Map = dynamic(() => import('react-map-gl').then(mod => mod.default), { ssr: false });
-const Marker = dynamic(() => import('react-map-gl').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-map-gl').then(mod => mod.Popup), { ssr: false });
-const NavigationControl = dynamic(() => import('react-map-gl').then(mod => mod.NavigationControl), { ssr: false });
-const FullscreenControl = dynamic(() => import('react-map-gl').then(mod => mod.FullscreenControl), { ssr: false });
+// CORREÇÃO: react-map-gl v8+ requer import do subpath /mapbox ou /maplibre
+const Map = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.Map })), { ssr: false });
+const Marker = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.Marker })), { ssr: false });
+const Popup = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.Popup })), { ssr: false });
+const NavigationControl = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.NavigationControl })), { ssr: false });
+const FullscreenControl = dynamic(() => import('react-map-gl/mapbox').then(mod => ({ default: mod.FullscreenControl })), { ssr: false });
 
 interface AmbulanciaAtiva {
   id: number;
