@@ -250,7 +250,7 @@ export const ocorrenciasService = {
           confirmado: false,
           usuario_id: null,
           valor_pagamento: ocorrenciaData.valor_medico || null,
-          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          data_pagamento: ocorrenciaData.data_pagamento,
           pago: false,
         });
 
@@ -260,7 +260,7 @@ export const ocorrenciasService = {
           confirmado: false,
           usuario_id: null,
           valor_pagamento: ocorrenciaData.valor_enfermeiro || null,
-          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          data_pagamento: ocorrenciaData.data_pagamento,
           pago: false,
         });
       } else {
@@ -271,7 +271,7 @@ export const ocorrenciasService = {
           confirmado: false,
           usuario_id: null,
           valor_pagamento: ocorrenciaData.valor_enfermeiro || null,
-          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          data_pagamento: ocorrenciaData.data_pagamento,
           pago: false,
         });
       }
@@ -284,7 +284,7 @@ export const ocorrenciasService = {
           confirmado: false,
           usuario_id: null,
           valor_pagamento: ocorrenciaData.valor_enfermeiro || null,
-          data_pagamento_previsto: ocorrenciaData.data_pagamento,
+          data_pagamento: ocorrenciaData.data_pagamento,
           pago: false,
         });
       }
