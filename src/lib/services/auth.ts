@@ -26,13 +26,22 @@ export interface AuthResponse {
  */
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
+    console.log('[AUTH] Tentando login com email:', credentials.email);
+
     // 1. Autenticar com Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
 
+    console.log('[AUTH] Auth data:', {
+      hasUser: !!authData.user,
+      hasSession: !!authData.session,
+      email: authData.user?.email
+    });
+
     if (authError) {
+      console.error('[AUTH] Auth error:', authError.message);
       return {
         user: null,
         error: authError.message,
@@ -40,6 +49,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     }
 
     if (!authData.user) {
+      console.error('[AUTH] Sem dados de usuário após login');
       return {
         user: null,
         error: 'Erro ao fazer login. Tente novamente.',

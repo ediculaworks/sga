@@ -114,8 +114,15 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  // Log detalhado para debug no Vercel
+  console.log('[Middleware] Pathname:', pathname);
+  console.log('[Middleware] Session exists:', !!session);
+  console.log('[Middleware] Session user email:', session?.user?.email || 'none');
+  console.log('[Middleware] Cookies:', request.cookies.getAll().map(c => c.name).join(', '));
+
   // Se não estiver autenticado, redirecionar para login
   if (!session) {
+    console.log('[Middleware] Sem sessão, redirecionando para /login');
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -127,12 +134,16 @@ export async function middleware(request: NextRequest) {
     .eq('email', session.user.email)
     .single();
 
+  console.log('[Middleware] User data:', userData);
+  console.log('[Middleware] User data error:', error);
+
   if (error || !userData) {
     console.error('[Middleware] Erro ao buscar usuário:', error);
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   const userProfile = userData.tipo_perfil;
+  console.log('[Middleware] User profile:', userProfile);
 
   // Verificar permissões para a rota
   for (const [routePrefix, allowedProfiles] of Object.entries(ROUTE_PERMISSIONS)) {
