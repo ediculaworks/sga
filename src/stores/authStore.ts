@@ -59,8 +59,7 @@ export const useAuthStore = create<AuthState>()(
 
         await authService.logout();
 
-        // CORREÇÃO: Resetar isInitialized ao fazer logout
-        set({ user: null, isLoading: false, isInitialized: false });
+        set({ user: null, isLoading: false });
       },
 
       /**
@@ -68,31 +67,18 @@ export const useAuthStore = create<AuthState>()(
        * Verifica se há uma sessão ativa e carrega os dados do usuário
        */
       initializeAuth: async () => {
-        const state = get();
+        if (get().isInitialized) return;
 
-        // Se já foi inicializado, não fazer nada
-        if (state.isInitialized) {
-          console.log('[authStore] Already initialized, skipping...');
-          return;
-        }
-
-        // Se já tem usuário persistido, apenas marcar como inicializado
-        if (state.user) {
-          console.log('[authStore] User found in storage, marking as initialized');
-          set({ isInitialized: true });
-          return;
-        }
-
-        // Caso contrário, buscar sessão atual do Supabase
-        console.log('[authStore] No user in storage, fetching from Supabase...');
         set({ isLoading: true });
 
         const { user } = await authService.getCurrentUser();
 
         set({ user, isLoading: false, isInitialized: true });
 
-        // NOTA: O listener de auth state change está no AuthProvider
-        // Removido daqui para evitar duplicação e loops infinitos
+        // Escutar mudanças no estado de autenticação
+        authService.onAuthStateChange((user) => {
+          set({ user });
+        });
       },
     }),
     {

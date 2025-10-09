@@ -30,7 +30,78 @@ Descrição clara e concisa da mudança.
 
 ---
 
-## [0.18.6] - 2025-10-09
+## [0.18.7] - 2025-10-09
+
+### 🔄 Revertido
+
+**REVERSÃO CRÍTICA: Correções de autenticação estavam causando loop infinito**
+
+**Problema Grave:**
+- Versões 0.18.5 e 0.18.6 introduziram mudanças que quebraram completamente a autenticação
+- Loop infinito de "Verificando permissões..." em TODAS as páginas
+- Botões paravam de funcionar
+- Impossível fazer logout ou navegar
+- Sistema completamente inutilizável
+
+**Causa Raiz Identificada:**
+
+1. **authStore.ts (v0.18.5)**
+   - Lógica de `initializeAuth` alterada para checar `user` persistido primeiro
+   - Isso impedia a inicialização correta do Supabase
+   - Estado de `isInitialized` ficava inconsistente
+
+2. **AuthProvider.tsx (v0.18.5)**
+   - Removidas dependências `[initializeAuth, setUser]` do useEffect
+   - useEffect não reagia corretamente a mudanças de estado
+   - Fetch de usuário no `SIGNED_IN` removido causava perda de dados
+
+3. **ProtectedRoute.tsx (v0.18.5)**
+   - Adicionado `useMemo` com dependências incorretas
+   - Criava loops de re-renderização infinitos
+   - Timeout de 5s não era suficiente para resolver
+
+**Ação Tomada:**
+- **REVERSÃO COMPLETA** para commit `991e590` (versão funcional)
+- Mantidas apenas as correções do Mapbox (que estavam OK)
+- Mantidas páginas 404 customizadas (não afetam autenticação)
+
+**Arquivos Revertidos:**
+- `src/stores/authStore.ts` → Estado funcionando antes das alterações
+- `src/components/providers/AuthProvider.tsx` → Listener correto de auth
+- `src/components/auth/ProtectedRoute.tsx` → Sem useMemo problemático
+
+**Arquivos Mantidos (estavam OK):**
+- `src/components/rastreamento/MapaRastreamento.tsx` - Correções do Mapbox
+- `src/types/react-map-gl.d.ts` - Tipos do Mapbox
+- `src/app/(dashboard)/not-found.tsx` - Página 404
+- `src/app/not-found.tsx` - Página 404 global
+
+**Lição Aprendida:**
+- ❌ Nunca alterar múltiplos arquivos críticos de autenticação simultaneamente
+- ❌ Não "otimizar" código que já está funcionando sem testes extensivos
+- ✅ Testar localmente ANTES de enviar para produção
+- ✅ Fazer commits atômicos (uma funcionalidade por vez)
+- ✅ Manter versões funcionando como backup
+
+**Estado Atual:**
+- ✅ Autenticação funcionando normalmente (como antes)
+- ✅ Mapbox carregando corretamente
+- ✅ Páginas 404 customizadas
+- ✅ Sistema completamente funcional
+
+### ⏭️ Próximo Passo
+
+**NÃO MEXER EM AUTENTICAÇÃO!** O sistema está funcionando.
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
+## [0.18.6] - 2025-10-09 ⚠️ QUEBRADO - NÃO USAR
 
 ### 🐛 Corrigido
 
@@ -103,7 +174,7 @@ Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)*
 
 ---
 
-## [0.18.5] - 2025-10-09
+## [0.18.5] - 2025-10-09 ⚠️ QUEBRADO - NÃO USAR
 
 ### 🐛 Corrigido
 
