@@ -53,6 +53,19 @@ interface OcorrenciaDetalhes {
   horario_chegada_local?: string;
   horario_termino?: string;
   participantes: Participante[];
+  ambulancia_id?: number | null;
+  ambulancia?: {
+    placa: string;
+    modelo: string;
+  } | null;
+  motorista_id?: number | null;
+  motorista?: {
+    nome_completo: string;
+  } | null;
+  duracao_total?: number | null;
+  carga_horaria?: number | null;
+  data_inicio?: string | null;
+  data_conclusao?: string | null;
 }
 
 interface Participante {
@@ -73,6 +86,16 @@ interface PacienteAtendido {
   idade?: number;
   sexo?: string;
   queixa_principal?: string;
+  quadro_clinico?: string;
+}
+
+interface ConsumoMaterial {
+  id: number;
+  quantidade_utilizada: number;
+  equipamento: {
+    nome: string;
+    unidade_medida?: string;
+  };
 }
 
 export function OcorrenciaDetalhesModal({
@@ -89,6 +112,11 @@ export function OcorrenciaDetalhesModal({
     atendimentoId: number;
     nome: string;
   } | null>(null);
+
+  // Estados para modal de enviar aviso
+  const [isAvisoModalOpen, setIsAvisoModalOpen] = useState(false);
+  const [avisoTexto, setAvisoTexto] = useState('');
+  const [isEnviandoAviso, setIsEnviandoAviso] = useState(false);
 
   const { data: ocorrencia, isLoading } = useQuery({
     queryKey: ['ocorrencia-detalhes', ocorrenciaId],
@@ -111,6 +139,14 @@ export function OcorrenciaDetalhesModal({
           horario_saida,
           horario_chegada_local,
           horario_termino,
+          ambulancia_id,
+          ambulancia:ambulancias(placa, modelo),
+          motorista_id,
+          motorista:usuarios!ocorrencias_motorista_id_fkey(nome_completo),
+          duracao_total,
+          carga_horaria,
+          data_inicio,
+          data_conclusao,
           participantes:ocorrencias_participantes(
             id,
             usuario_id,
@@ -180,6 +216,82 @@ export function OcorrenciaDetalhesModal({
     gcTime: 1000 * 60 * 10, // 10 minutos
   });
 
+  // Query para buscar pacientes concluídos (status CONCLUIDA)
+  const { data: pacientesConcluidos } = useQuery({
+    queryKey: ['pacientes-concluidos', ocorrenciaId],
+    queryFn: async (): Promise<PacienteAtendido[]> => {
+      if (!ocorrenciaId) return [];
+
+      const { data, error } = await supabase
+        .from('atendimentos')
+        .select(
+          `
+          id,
+          queixa_principal,
+          quadro_clinico,
+          pacientes (
+            nome_completo,
+            idade,
+            sexo
+          )
+        `
+        )
+        .eq('ocorrencia_id', ocorrenciaId);
+
+      if (error) {
+        console.error('Erro ao buscar pacientes concluídos:', error);
+        return [];
+      }
+
+      return (data || []).map((atendimento: any) => ({
+        id: atendimento.id,
+        nome_completo: atendimento.pacientes?.nome_completo || 'Paciente sem nome',
+        idade: atendimento.pacientes?.idade,
+        sexo: atendimento.pacientes?.sexo,
+        queixa_principal: atendimento.queixa_principal,
+        quadro_clinico: atendimento.quadro_clinico,
+      }));
+    },
+    enabled:
+      isOpen && !!ocorrenciaId && ocorrencia?.status_ocorrencia === 'CONCLUIDA',
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 15, // 15 minutos
+  });
+
+  // Query para buscar consumo de materiais (status CONCLUIDA)
+  const { data: consumoMateriais } = useQuery({
+    queryKey: ['consumo-materiais', ocorrenciaId],
+    queryFn: async (): Promise<ConsumoMaterial[]> => {
+      if (!ocorrenciaId) return [];
+
+      const { data, error } = await supabase
+        .from('consumo_materiais')
+        .select(
+          `
+          id,
+          quantidade_utilizada,
+          equipamento:equipamentos_catalogo(nome, unidade_medida)
+        `
+        )
+        .eq('ocorrencia_id', ocorrenciaId);
+
+      if (error) {
+        console.error('Erro ao buscar consumo de materiais:', error);
+        return [];
+      }
+
+      return (data || []).map((consumo: any) => ({
+        id: consumo.id,
+        quantidade_utilizada: consumo.quantidade_utilizada,
+        equipamento: consumo.equipamento || { nome: 'Desconhecido', unidade_medida: 'un' },
+      }));
+    },
+    enabled:
+      isOpen && !!ocorrenciaId && ocorrencia?.status_ocorrencia === 'CONCLUIDA',
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 15, // 15 minutos
+  });
+
   // Função para salvar nota de enfermeiro
   const handleSalvarNota = async (atendimentoId: number, nota: string) => {
     try {
@@ -224,6 +336,64 @@ export function OcorrenciaDetalhesModal({
   const handleAdicionarNota = (atendimentoId: number, nome: string) => {
     setPacienteSelecionado({ atendimentoId, nome });
     setIsNotaModalOpen(true);
+  };
+
+  // Função para enviar aviso (FASE 8.2 - Chefe dos Médicos)
+  const handleEnviarAviso = async () => {
+    if (!avisoTexto.trim() || !ocorrenciaId || !ocorrencia) return;
+
+    setIsEnviandoAviso(true);
+    try {
+      // Buscar ID do usuário logado (Chefe dos Médicos)
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const { data: usuario, error: userError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+
+      if (userError || !usuario) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      // Buscar todos os participantes da ocorrência
+      const participantesIds = ocorrencia.participantes
+        .filter((p) => p.usuario_id)
+        .map((p) => p.usuario_id);
+
+      // Criar notificação para cada participante
+      const notificacoes = participantesIds.map((destinatarioId) => ({
+        remetente_id: usuario.id,
+        destinatario_id: destinatarioId,
+        ocorrencia_id: ocorrenciaId,
+        tipo_notificacao: 'AVISO_OCORRENCIA',
+        titulo: `Aviso - Ocorrência ${ocorrencia.numero_ocorrencia}`,
+        mensagem: avisoTexto,
+        lida: false,
+      }));
+
+      const { error } = await supabase.from('notificacoes').insert(notificacoes);
+
+      if (error) throw error;
+
+      // Limpar e fechar modal
+      setAvisoTexto('');
+      setIsAvisoModalOpen(false);
+
+      // Toast de sucesso (você pode adicionar toast aqui se quiser)
+      alert(`Aviso enviado para ${participantesIds.length} participante(s)!`);
+    } catch (error) {
+      console.error('Erro ao enviar aviso:', error);
+      alert('Erro ao enviar aviso. Tente novamente.');
+    } finally {
+      setIsEnviandoAviso(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -363,7 +533,75 @@ export function OcorrenciaDetalhesModal({
                   </span>
                 </div>
               )}
+              {ocorrencia.carga_horaria && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-600">Carga Horária:</span>
+                  <span className="font-medium text-gray-900">
+                    {ocorrencia.carga_horaria} horas
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Informações da Ambulância e Motorista - Para status CONFIRMADA, EM_ANDAMENTO e CONCLUIDA */}
+            {(ocorrencia.status_ocorrencia === 'CONFIRMADA' ||
+              ocorrencia.status_ocorrencia === 'EM_ANDAMENTO' ||
+              ocorrencia.status_ocorrencia === 'CONCLUIDA') &&
+              ocorrencia.ambulancia && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+                  <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
+                    <Ambulance className="w-4 h-4" />
+                    Ambulância Atribuída
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Placa:</span>
+                    <span className="font-bold text-purple-900 text-lg">
+                      {ocorrencia.ambulancia.placa}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Modelo:</span>
+                    <span className="font-medium text-gray-900">
+                      {ocorrencia.ambulancia.modelo}
+                    </span>
+                  </div>
+                  {ocorrencia.motorista && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Motorista:</span>
+                      <span className="font-medium text-gray-900">
+                        {ocorrencia.motorista.nome_completo}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {/* Duração Total - Apenas para status CONCLUIDA */}
+            {ocorrencia.status_ocorrencia === 'CONCLUIDA' &&
+              ocorrencia.duracao_total && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-2 font-medium flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    Duração Total da Operação
+                  </p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {Math.floor(ocorrencia.duracao_total / 60)}h {ocorrencia.duracao_total % 60}min
+                  </p>
+                  {ocorrencia.data_inicio && (
+                    <p className="text-xs text-gray-600 mt-2">
+                      Início:{' '}
+                      {format(new Date(ocorrencia.data_inicio), 'dd/MM/yyyy HH:mm')}
+                    </p>
+                  )}
+                  {ocorrencia.data_conclusao && (
+                    <p className="text-xs text-gray-600">
+                      Conclusão:{' '}
+                      {format(new Date(ocorrencia.data_conclusao), 'dd/MM/yyyy HH:mm')}
+                    </p>
+                  )}
+                </div>
+              )}
 
             {/* Participantes/Vagas */}
             <div>
@@ -402,6 +640,72 @@ export function OcorrenciaDetalhesModal({
                 ))}
               </div>
             </div>
+
+            {/* Pacientes Atendidos - Apenas para status CONCLUIDA */}
+            {ocorrencia.status_ocorrencia === 'CONCLUIDA' &&
+              pacientesConcluidos &&
+              pacientesConcluidos.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    Pacientes Atendidos ({pacientesConcluidos.length})
+                  </p>
+                  <div className="space-y-2">
+                    {pacientesConcluidos.map((paciente) => (
+                      <div
+                        key={paciente.id}
+                        className="p-3 bg-white border rounded-lg"
+                      >
+                        <p className="font-medium text-gray-900">
+                          {paciente.nome_completo}
+                        </p>
+                        <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                          {paciente.idade && <span>Idade: {paciente.idade} anos</span>}
+                          {paciente.sexo && <span>Sexo: {paciente.sexo}</span>}
+                        </div>
+                        {paciente.queixa_principal && (
+                          <p className="text-xs text-gray-600 mt-2">
+                            <span className="font-medium">Queixa:</span> {paciente.queixa_principal}
+                          </p>
+                        )}
+                        {paciente.quadro_clinico && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            <span className="font-medium">Quadro Clínico:</span> {paciente.quadro_clinico}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {/* Consumo de Materiais - Apenas para status CONCLUIDA */}
+            {ocorrencia.status_ocorrencia === 'CONCLUIDA' &&
+              consumoMateriais &&
+              consumoMateriais.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-3 font-medium flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    Consumo de Materiais ({consumoMateriais.length} itens)
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {consumoMateriais.map((consumo) => (
+                      <div
+                        key={consumo.id}
+                        className="p-2 bg-white border rounded text-sm"
+                      >
+                        <p className="font-medium text-gray-900 text-xs">
+                          {consumo.equipamento.nome}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Qtd: {consumo.quantidade_utilizada}{' '}
+                          {consumo.equipamento.unidade_medida || 'un'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             {/* Informações de Pagamento */}
             {/* Chefe dos Médicos vê todos os valores | Profissionais veem apenas seu valor */}
@@ -519,6 +823,17 @@ export function OcorrenciaDetalhesModal({
             <X className="w-4 h-4 mr-2" />
             Fechar
           </Button>
+          {/* Botão Enviar Aviso - FASE 8.2 - Apenas Chefe dos Médicos em status EM_ANDAMENTO */}
+          {perfil === 'CHEFE_MEDICOS' &&
+            ocorrencia?.status_ocorrencia === 'EM_ANDAMENTO' && (
+              <Button
+                onClick={() => setIsAvisoModalOpen(true)}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Enviar Aviso
+              </Button>
+            )}
           {podeConfirmar && ocorrenciaId && (
             <Button
               onClick={() => onConfirmarParticipacao(ocorrenciaId)}
@@ -537,6 +852,58 @@ export function OcorrenciaDetalhesModal({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Modal de Enviar Aviso - FASE 8.2 */}
+      <Dialog open={isAvisoModalOpen} onOpenChange={setIsAvisoModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enviar Aviso para Equipe</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Envie um aviso importante para todos os participantes desta ocorrência.
+            </p>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Mensagem do Aviso
+              </label>
+              <textarea
+                value={avisoTexto}
+                onChange={(e) => setAvisoTexto(e.target.value)}
+                placeholder="Digite sua mensagem aqui..."
+                className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                disabled={isEnviandoAviso}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAvisoModalOpen(false);
+                setAvisoTexto('');
+              }}
+              disabled={isEnviandoAviso}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleEnviarAviso}
+              disabled={!avisoTexto.trim() || isEnviandoAviso}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {isEnviandoAviso ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Enviando...
+                </>
+              ) : (
+                'Enviar Aviso'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Adicionar Nota - FASE 6.2 */}
       {pacienteSelecionado && (
