@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
  * CORREÇÃO: Não usa ProtectedRoute para evitar loops infinitos
  */
 export default function DashboardNotFound() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   const handleGoToDashboard = () => {
@@ -26,17 +26,6 @@ export default function DashboardNotFound() {
       router.push('/login');
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

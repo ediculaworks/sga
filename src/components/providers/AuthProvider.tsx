@@ -7,15 +7,16 @@ import { supabase } from '@/lib/supabase/client';
 /**
  * AuthProvider Component
  *
- * Provider que inicializa o estado de autenticação quando o app carrega.
- * Verifica se há uma sessão ativa e carrega os dados do usuário.
+ * Provider simplificado que apenas escuta mudanças de autenticação.
  *
- * CORREÇÕES:
- * - Refresh automático de sessão a cada 50 minutos
- * - Listener de eventos de autenticação
- * - Detecta expiração de sessão
+ * A validação de autenticação é feita via middleware (server-side).
+ * Este provider apenas:
+ * - Escuta eventos de logout (SIGNED_OUT)
+ * - Atualiza o store quando houver mudanças
+ * - Faz refresh automático do token a cada 50 minutos
  *
- * Este componente deve ser usado no layout raiz da aplicação.
+ * NOTA: A partir da v0.18.10, não há mais "inicialização assíncrona" do estado.
+ * O middleware já garante que apenas usuários autenticados acessem rotas protegidas.
  */
 
 interface AuthProviderProps {
@@ -23,23 +24,20 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
-    // Inicializar autenticação quando o app carrega
-    initializeAuth();
-
-    // CORREÇÃO: Listener de mudanças no estado de autenticação
+    // Listener de mudanças no estado de autenticação
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[AuthProvider] Auth state changed:', event);
 
       if (event === 'SIGNED_OUT') {
+        // Limpar usuário do store ao fazer logout
         setUser(null);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Buscar dados atualizados do usuário
+        // Atualizar dados do usuário quando houver login ou refresh de token
         if (session?.user?.email) {
           const { data: userData } = await supabase
             .from('usuarios')
@@ -51,12 +49,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(userData);
           }
         }
-      } else if (event === 'PASSWORD_RECOVERY') {
-        console.log('[AuthProvider] Password recovery initiated');
       }
     });
 
-    // CORREÇÃO: Refresh automático a cada 50 minutos (token expira em 60min)
+    // Refresh automático de token a cada 50 minutos (token expira em 60min)
     const refreshInterval = setInterval(
       async () => {
         const {
@@ -69,10 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (error) {
             console.error('[AuthProvider] Error refreshing session:', error);
-            // Se falhar o refresh, fazer logout
             setUser(null);
-          } else {
-            console.log('[AuthProvider] Session refreshed successfully');
           }
         }
       },
@@ -84,7 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe();
       clearInterval(refreshInterval);
     };
-  }, [initializeAuth, setUser]);
+  }, [setUser]);
 
   return <>{children}</>;
 }

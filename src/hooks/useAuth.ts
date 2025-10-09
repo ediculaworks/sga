@@ -6,17 +6,22 @@ import { TipoPerfil } from '@/types';
  *
  * Fornece acesso fácil aos dados de autenticação e funções de controle de acesso.
  *
+ * NOTA: A partir da v0.18.10, este hook é simplificado pois a autenticação
+ * é validada via middleware. Não há mais estados de "inicialização" ou
+ * "verificando permissões". O middleware garante que o usuário esteja
+ * autenticado antes de renderizar qualquer componente.
+ *
  * @example
  * ```tsx
- * const { user, isLoading, hasPermission } = useAuth();
+ * const { user, hasPermission } = useAuth();
  *
- * if (hasPermission(['MEDICO', 'ENFERMEIRO'])) {
+ * if (hasPermission([TipoPerfil.MEDICO, TipoPerfil.ENFERMEIRO])) {
  *   // Renderizar conteúdo
  * }
  * ```
  */
 export function useAuth() {
-  const { user, isLoading, isInitialized, login, logout } = useAuthStore();
+  const { user, isLoading, login, logout } = useAuthStore();
 
   /**
    * Verifica se o usuário tem permissão baseado em uma lista de perfis permitidos
@@ -42,8 +47,7 @@ export function useAuth() {
   return {
     // Estados
     user,
-    isLoading,
-    isInitialized,
+    isLoading, // Apenas para login/logout
     isAuthenticated,
     userProfile,
 

@@ -10,25 +10,25 @@ import * as authService from '@/lib/services/auth';
  * e fornece funções para login, logout e verificação de autenticação.
  *
  * Usa persistência para manter o usuário logado entre sessões.
+ *
+ * NOTA: A partir da v0.18.10, a autenticação é validada via middleware.
+ * Este store apenas armazena o estado do usuário (sem inicialização assíncrona).
  */
 
 interface AuthState {
   user: Usuario | null;
   isLoading: boolean;
-  isInitialized: boolean;
   setUser: (user: Usuario | null) => void;
   setLoading: (loading: boolean) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  initializeAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isLoading: false,
-      isInitialized: false,
 
       setUser: (user) => set({ user, isLoading: false }),
 
@@ -60,25 +60,6 @@ export const useAuthStore = create<AuthState>()(
         await authService.logout();
 
         set({ user: null, isLoading: false });
-      },
-
-      /**
-       * Inicializa o estado de autenticação
-       * Verifica se há uma sessão ativa e carrega os dados do usuário
-       */
-      initializeAuth: async () => {
-        if (get().isInitialized) return;
-
-        set({ isLoading: true });
-
-        const { user } = await authService.getCurrentUser();
-
-        set({ user, isLoading: false, isInitialized: true });
-
-        // Escutar mudanças no estado de autenticação
-        authService.onAuthStateChange((user) => {
-          set({ user });
-        });
       },
     }),
     {

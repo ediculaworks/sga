@@ -30,6 +30,121 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.18.10] - 2025-10-09
+
+### 🔧 Modificado
+
+**Simplificação do Sistema de Autenticação (Complemento da v0.18.9)**
+
+**Problema Persistente:**
+- Após migração para middleware (v0.18.9), mensagem "Verificando permissões..." ainda aparecia
+- Causa: Hook `useAuth` e `authStore` mantinham lógica de inicialização assíncrona
+- `isInitialized` no store causava delay mesmo com middleware validando
+- Sidebar e outros componentes mostravam loading desnecessário
+
+**Análise da Arquitetura:**
+```
+ANTES (v0.18.9):
+1. Middleware valida → OK ✅
+2. Página renderiza → OK ✅
+3. useAuth verifica isInitialized → ❌ DELAY
+4. authStore.initializeAuth() → ❌ ASYNC DESNECESSÁRIO
+5. Componentes aguardam → ❌ "Verificando permissões..."
+
+AGORA (v0.18.10):
+1. Middleware valida → OK ✅
+2. Página renderiza → OK ✅
+3. useAuth apenas lê estado → ✅ INSTANTÂNEO
+4. Componentes renderizam imediatamente → ✅ SEM DELAY
+```
+
+**Solução Implementada:**
+
+1. **Simplificação do authStore** (`src/stores/authStore.ts`)
+   - **Removido:** `isInitialized` (não é mais necessário)
+   - **Removido:** `initializeAuth()` (middleware já validou)
+   - Store agora apenas armazena estado do usuário (síncrono)
+   - Mantidas apenas funções: `login`, `logout`, `setUser`, `setLoading`
+   - `isLoading` mantido apenas para feedback visual durante login/logout
+
+2. **Simplificação do AuthProvider** (`src/components/providers/AuthProvider.tsx`)
+   - **Removido:** Chamada para `initializeAuth()`
+   - Provider agora apenas:
+     - Escuta eventos de autenticação (SIGNED_OUT, SIGNED_IN, TOKEN_REFRESHED)
+     - Atualiza store quando houver mudanças
+     - Refresh automático de token a cada 50 minutos
+   - Sem estados de "inicialização" ou delays
+
+3. **Simplificação do useAuth** (`src/hooks/useAuth.ts`)
+   - **Removido:** `isInitialized` do retorno
+   - Hook agora apenas acessa dados do Zustand (síncrono)
+   - `isLoading` retornado apenas para login/logout (não afeta renderização)
+   - Documentação atualizada com nota sobre middleware
+
+4. **Atualização do not-found.tsx** (`src/app/(dashboard)/not-found.tsx`)
+   - Removido estado de loading (não é mais necessário)
+   - Renderização imediata
+
+5. **Marcação de Deprecated no ProtectedRoute** (`src/components/auth/ProtectedRoute.tsx`)
+   - Adicionado aviso `@deprecated` na documentação
+   - Removido `isInitialized` (não existe mais no hook)
+   - Componente mantido apenas para referência futura
+   - Todas as páginas já migradas para middleware
+
+**Arquivos Modificados:**
+- `src/stores/authStore.ts` - Removido isInitialized e initializeAuth
+- `src/components/providers/AuthProvider.tsx` - Removido inicialização assíncrona
+- `src/hooks/useAuth.ts` - Removido isInitialized do retorno
+- `src/app/(dashboard)/not-found.tsx` - Removido loading state
+- `src/components/auth/ProtectedRoute.tsx` - Marcado como deprecated
+
+**Decisões Técnicas:**
+- Middleware garante auth → Store não precisa re-validar
+- Zustand com persist → Dados do usuário já disponíveis instantaneamente
+- Sem inicialização async → Renderização imediata
+- AuthProvider apenas escuta mudanças → Atualização reativa
+
+**Fluxo Simplificado:**
+```
+1. Usuário faz login
+   ↓
+2. Token salvo no Supabase + Zustand persiste user
+   ↓
+3. Próxima navegação: Middleware valida token (server-side)
+   ↓
+4. Zustand restaura user do localStorage (instantâneo)
+   ↓
+5. useAuth retorna user imediatamente (sem async)
+   ↓
+6. Componentes renderizam SEM delay
+```
+
+**Impacto:**
+- ✅ **ELIMINADO** completamente "Verificando permissões..."
+- ✅ Renderização instantânea de componentes
+- ✅ Sem delays ou loading states desnecessários
+- ✅ Código mais simples e manutenível
+- ✅ Melhor performance (sem operações assíncronas redundantes)
+- ✅ UX perfeita (sem flickering ou mensagens de loading)
+
+**Comparação de Linhas de Código:**
+- `authStore.ts`: 90 linhas → 70 linhas (-22%)
+- `AuthProvider.tsx`: 91 linhas → 83 linhas (-9%)
+- `useAuth.ts`: 56 linhas → 60 linhas (+7% com docs)
+- `ProtectedRoute.tsx`: 85 linhas → 91 linhas (+7% com deprecation warning)
+
+### ⏭️ Próximo Passo
+
+**Sistema de autenticação agora está completamente otimizado!**
+
+Continuar com **FASE 10.2 - Detalhes e Estatísticas de Ambulância (Avançado)**
+- Gráficos de utilização (Recharts)
+- Histórico completo de manutenções
+- Gestão de gastos por ambulância
+- Relatórios de desempenho
+
+---
+
 ## [0.18.9] - 2025-10-09
 
 ### 🔧 Modificado
