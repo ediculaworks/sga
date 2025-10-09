@@ -1,4 +1,4 @@
-declare module 'react-map-gl' {
+declare module 'react-map-gl/mapbox' {
   import { ComponentType, CSSProperties, ReactNode, RefObject } from 'react';
 
   export interface ViewState {
@@ -47,12 +47,9 @@ declare module 'react-map-gl' {
     position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
   }
 
-  const Map: ComponentType<MapProps>;
-  const Marker: ComponentType<MarkerProps>;
-  const Popup: ComponentType<PopupProps>;
-  const NavigationControl: ComponentType<NavigationControlProps>;
-  const FullscreenControl: ComponentType<FullscreenControlProps>;
-
-  export default Map;
-  export { Marker, Popup, NavigationControl, FullscreenControl };
+  export const Map: ComponentType<MapProps>;
+  export const Marker: ComponentType<MarkerProps>;
+  export const Popup: ComponentType<PopupProps>;
+  export const NavigationControl: ComponentType<NavigationControlProps>;
+  export const FullscreenControl: ComponentType<FullscreenControlProps>;
 }
