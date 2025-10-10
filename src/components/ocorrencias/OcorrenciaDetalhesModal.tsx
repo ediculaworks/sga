@@ -71,6 +71,7 @@ interface OcorrenciaDetalhes {
 interface Participante {
   id: number;
   usuario_id: number | null;
+  usuario_designado_id?: number | null; // Profissional designado diretamente
   funcao: string;
   valor_pagamento?: number;
   data_pagamento?: string;
@@ -178,6 +179,7 @@ export function OcorrenciaDetalhesModal({
           participantes:ocorrencias_participantes(
             id,
             usuario_id,
+            usuario_designado_id,
             funcao,
             valor_pagamento,
             data_pagamento,
