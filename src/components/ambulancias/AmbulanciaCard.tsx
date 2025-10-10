@@ -43,7 +43,10 @@ export function AmbulanciaCard({ ambulancia, onUpdate }: AmbulanciaCardProps) {
     if (!tipo) return 'bg-gray-100 text-gray-800 border-gray-200';
 
     const colors: Record<string, string> = {
-      BASICA: 'bg-blue-100 text-blue-800 border-blue-200',
+      USB: 'bg-green-100 text-green-800 border-green-200',
+      UTI: 'bg-red-100 text-red-800 border-red-200',
+      // Compatibilidade com valores antigos
+      BASICA: 'bg-green-100 text-green-800 border-green-200',
       EMERGENCIA: 'bg-red-100 text-red-800 border-red-200',
     };
     return colors[tipo] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -54,8 +57,11 @@ export function AmbulanciaCard({ ambulancia, onUpdate }: AmbulanciaCardProps) {
     if (!tipo) return 'Não definido';
 
     const labels: Record<string, string> = {
-      BASICA: 'Básica',
-      EMERGENCIA: 'Emergência',
+      USB: 'USB (Suporte Básico)',
+      UTI: 'UTI (Terapia Intensiva)',
+      // Compatibilidade com valores antigos
+      BASICA: 'USB (Suporte Básico)',
+      EMERGENCIA: 'UTI (Terapia Intensiva)',
     };
     return labels[tipo] || tipo;
   };

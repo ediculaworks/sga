@@ -23,7 +23,7 @@ interface OcorrenciaCardProps {
     id: number;
     numero_ocorrencia: string;
     tipo_trabalho: 'EVENTO' | 'DOMICILIAR' | 'EMERGENCIA' | 'TRANSFERENCIA';
-    tipo_ambulancia: 'BASICA' | 'EMERGENCIA';
+    tipo_ambulancia: 'USB' | 'UTI' | 'BASICA' | 'EMERGENCIA'; // Mantém compatibilidade com valores antigos
     data_ocorrencia: string;
     horario_saida: string;
     horario_no_local: string | null;

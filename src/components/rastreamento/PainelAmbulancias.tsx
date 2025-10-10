@@ -100,11 +100,25 @@ export function PainelAmbulancias({
   });
 
   const getTipoColor = (tipo: string) => {
-    return tipo === 'EMERGENCIA' ? 'text-red-600' : 'text-blue-600';
+    const colors: Record<string, string> = {
+      UTI: 'text-red-600',
+      USB: 'text-green-600',
+      // Compatibilidade com valores antigos
+      EMERGENCIA: 'text-red-600',
+      BASICA: 'text-green-600',
+    };
+    return colors[tipo] || 'text-gray-600';
   };
 
   const getTipoBgColor = (tipo: string) => {
-    return tipo === 'EMERGENCIA' ? 'bg-red-50' : 'bg-blue-50';
+    const colors: Record<string, string> = {
+      UTI: 'bg-red-50',
+      USB: 'bg-green-50',
+      // Compatibilidade com valores antigos
+      EMERGENCIA: 'bg-red-50',
+      BASICA: 'bg-green-50',
+    };
+    return colors[tipo] || 'bg-gray-50';
   };
 
   if (isLoading) {
@@ -162,7 +176,7 @@ export function PainelAmbulancias({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Ambulance
-                    className={cn('w-5 h-5', getTipoColor(ambulancia.tipo_atual || 'BASICA'))}
+                    className={cn('w-5 h-5', getTipoColor(ambulancia.tipo_atual || 'USB'))}
                     fill="currentColor"
                   />
                   <div>
@@ -174,11 +188,19 @@ export function PainelAmbulancias({
                 <span
                   className={cn(
                     'text-xs font-medium px-2 py-1 rounded-full',
-                    getTipoBgColor(ambulancia.tipo_atual || 'BASICA'),
-                    getTipoColor(ambulancia.tipo_atual || 'BASICA')
+                    getTipoBgColor(ambulancia.tipo_atual || 'USB'),
+                    getTipoColor(ambulancia.tipo_atual || 'USB')
                   )}
                 >
-                  {ambulancia.tipo_atual === 'EMERGENCIA' ? 'Emergência' : 'Básica'}
+                  {(() => {
+                    const labels: Record<string, string> = {
+                      UTI: 'UTI',
+                      USB: 'USB',
+                      EMERGENCIA: 'UTI',
+                      BASICA: 'USB',
+                    };
+                    return labels[ambulancia.tipo_atual || ''] || ambulancia.tipo_atual;
+                  })()}
                 </span>
               </div>
 

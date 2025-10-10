@@ -152,7 +152,14 @@ export function MapaRastreamento({
 
   // Função para obter cor do marker por tipo
   const getMarkerColor = (tipo: string) => {
-    return tipo === 'EMERGENCIA' ? '#ef4444' : '#3b82f6'; // Vermelho ou Azul
+    const colors: Record<string, string> = {
+      UTI: '#ef4444', // Vermelho
+      USB: '#10b981', // Verde
+      // Compatibilidade com valores antigos
+      EMERGENCIA: '#ef4444',
+      BASICA: '#10b981',
+    };
+    return colors[tipo] || '#6b7280'; // Cinza como fallback
   };
 
   // Abrir modal de detalhes da ocorrência
@@ -247,7 +254,7 @@ export function MapaRastreamento({
                 <div
                   className="cursor-pointer transition-transform hover:scale-110"
                   style={{
-                    color: getMarkerColor(ambulancia.tipo_atual || 'BASICA'),
+                    color: getMarkerColor(ambulancia.tipo_atual || 'USB'),
                   }}
                 >
                   <Ambulance className="w-8 h-8 drop-shadow-lg" fill="currentColor" />
@@ -274,7 +281,7 @@ export function MapaRastreamento({
                 <div className="flex items-center gap-2 mb-3">
                   <Ambulance
                     className="w-5 h-5"
-                    style={{ color: getMarkerColor(popupInfo.tipo_atual || 'BASICA') }}
+                    style={{ color: getMarkerColor(popupInfo.tipo_atual || 'USB') }}
                   />
                   <h3 className="font-bold text-gray-900">{popupInfo.placa}</h3>
                 </div>
@@ -288,7 +295,15 @@ export function MapaRastreamento({
                   <div>
                     <span className="text-gray-600">Tipo:</span>
                     <span className="ml-2 font-medium text-gray-900">
-                      {popupInfo.tipo_atual === 'EMERGENCIA' ? 'Emergência' : 'Básica'}
+                      {(() => {
+                        const labels: Record<string, string> = {
+                          UTI: 'UTI (Terapia Intensiva)',
+                          USB: 'USB (Suporte Básico)',
+                          EMERGENCIA: 'UTI (Terapia Intensiva)',
+                          BASICA: 'USB (Suporte Básico)',
+                        };
+                        return labels[popupInfo.tipo_atual || ''] || popupInfo.tipo_atual;
+                      })()}
                     </span>
                   </div>
 

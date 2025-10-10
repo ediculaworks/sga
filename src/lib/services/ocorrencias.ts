@@ -242,10 +242,11 @@ export const ocorrenciasService = {
       }
 
       // 4. Criar vagas de participantes baseado no tipo de ambulância
+      // NOTA: Este método está DESCONTINUADO. Use createComVagasDinamicas() no lugar.
       const vagas: any[] = [];
 
-      if (ocorrenciaData.tipo_ambulancia === TipoAmbulancia.EMERGENCIA) {
-        // Ambulância de emergência: 1 médico + 1 enfermeiro (mínimo)
+      if (ocorrenciaData.tipo_ambulancia === TipoAmbulancia.UTI) {
+        // Ambulância UTI: 1 médico + 1 enfermeiro (mínimo)
         vagas.push({
           ocorrencia_id: ocorrencia.id,
           funcao: 'MEDICO',
@@ -266,7 +267,7 @@ export const ocorrenciasService = {
           pago: false,
         });
       } else {
-        // Ambulância básica: apenas 1 enfermeiro (mínimo)
+        // Ambulância USB: apenas 1 enfermeiro (mínimo)
         vagas.push({
           ocorrencia_id: ocorrencia.id,
           funcao: 'ENFERMEIRO',

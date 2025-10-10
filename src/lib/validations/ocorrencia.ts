@@ -239,14 +239,14 @@ export const criarOcorrenciaSchema = z
   )
   .refine(
     (data) => {
-      // Validação: valor_medico é obrigatório se tipo_ambulancia é EMERGENCIA
-      if (data.tipo_ambulancia === TipoAmbulancia.EMERGENCIA && !data.valor_medico) {
+      // Validação: valor_medico é obrigatório se tipo_ambulancia é UTI (com médico)
+      if (data.tipo_ambulancia === TipoAmbulancia.UTI && !data.valor_medico) {
         return false;
       }
       return true;
     },
     {
-      message: 'Valor do médico é obrigatório para ambulância de emergência',
+      message: 'Valor do médico é obrigatório para ambulância UTI (com médico)',
       path: ['valor_medico'],
     }
   );

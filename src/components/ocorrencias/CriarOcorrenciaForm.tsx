@@ -370,8 +370,8 @@ export function CriarOcorrenciaForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Valor Médico (apenas se EMERGENCIA) */}
-            {tipoAmbulancia === TipoAmbulancia.EMERGENCIA && (
+            {/* Valor Médico (apenas se UTI - ambulância com médico) */}
+            {tipoInferido === TipoAmbulancia.UTI && (
               <div className="space-y-2">
                 <Label htmlFor="valor_medico">
                   Valor Médico (R$) <span className="text-red-500">*</span>

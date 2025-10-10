@@ -121,7 +121,15 @@ export function AmbulanciaDetalhesModal({
 
   const getTipoLabel = (tipo: string | null | undefined) => {
     if (!tipo) return 'Não definido';
-    return tipo === 'BASICA' ? 'Básica' : 'Emergência';
+
+    const labels: Record<string, string> = {
+      USB: 'USB (Suporte Básico)',
+      UTI: 'UTI (Terapia Intensiva)',
+      // Compatibilidade com valores antigos
+      BASICA: 'USB (Suporte Básico)',
+      EMERGENCIA: 'UTI (Terapia Intensiva)',
+    };
+    return labels[tipo] || tipo;
   };
 
   const formatDate = (date: string) => {

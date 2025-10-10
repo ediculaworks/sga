@@ -267,8 +267,8 @@ export function OcorrenciasTable({ onVerDetalhes, onExcluir }: OcorrenciasTableP
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="TODOS">Todas</SelectItem>
-            <SelectItem value={TipoAmbulancia.BASICA}>Básica</SelectItem>
-            <SelectItem value={TipoAmbulancia.EMERGENCIA}>Emergência</SelectItem>
+            <SelectItem value={TipoAmbulancia.USB}>USB (Suporte Básico)</SelectItem>
+            <SelectItem value={TipoAmbulancia.UTI}>UTI (Terapia Intensiva)</SelectItem>
           </SelectContent>
         </Select>
       </div>
