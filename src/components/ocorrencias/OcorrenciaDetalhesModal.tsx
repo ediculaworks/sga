@@ -184,7 +184,7 @@ export function OcorrenciaDetalhesModal({
             valor_pagamento,
             data_pagamento,
             confirmado,
-            usuario:usuarios(nome_completo)
+            usuario:usuarios!ocorrencias_participantes_usuario_id_fkey(nome_completo)
           )
         `
         )
