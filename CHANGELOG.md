@@ -30,6 +30,37 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.20.0] - 2025-01-10
+
+### 🚀 Refatoração - Tipos de Ambulância e Inferência Automática
+
+**BREAKING CHANGE:** Renomeação completa dos tipos de ambulância + lógica de inferência automática
+
+**Mudanças de Nomenclatura:**
+- BASICA → USB (Unidade de Suporte Básico)
+- EMERGENCIA → UTI (Unidade de Terapia Intensiva)
+
+**Nova Regra:**
+Tipo de ambulância é **inferido AUTOMATICAMENTE** pela equipe:
+- Se há médico → UTI
+- Se não há médico → USB
+
+**Arquivos:**
+- `src/lib/utils/ambulancia.ts` - NOVO - Funções de inferência
+- `src/types/index.ts` - Enum TipoAmbulancia atualizado (USB | UTI)
+- `src/lib/utils/styles.ts` - Labels e cores atualizados
+- `src/components/ocorrencias/CriarOcorrenciaForm.tsx` - Campo removido, display inferido adicionado
+- `src/lib/services/ocorrencias.ts` - Inferência automática integrada
+- `supabase/migrations/20250110_rename_ambulancia_types.sql` - NOVO
+
+**Decisão Técnica:**
+Eliminar "equipe mínima fixa" e dar total flexibilidade na composição da equipe. Tipo é consequência da equipe, não pré-requisito.
+
+**Próximo Passo:**
+Executar migration no banco de dados
+
+---
+
 ## [0.19.0] - 2025-01-09
 
 ### 🚀 Refatoração Completa - Sistema de Alocação Dinâmica de Profissionais

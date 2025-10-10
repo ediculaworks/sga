@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,7 @@ import {
 } from '@/lib/utils/styles';
 import { formatarInputData, formatarInputHora } from '@/lib/utils/formatters';
 import { DynamicProfessionalList } from './DynamicProfessionalList';
+import { inferirTipoAmbulancia, getDescricaoTipoInferido } from '@/lib/utils/ambulancia';
 
 interface CriarOcorrenciaFormProps {
   onSubmit: (data: CriarOcorrenciaFormData) => Promise<void>;
@@ -38,6 +39,7 @@ export function CriarOcorrenciaForm({
   isSubmitting,
 }: CriarOcorrenciaFormProps) {
   const [vagas, setVagas] = useState<VagaProfissional[]>([]);
+  const [tipoInferido, setTipoInferido] = useState<TipoAmbulancia | null>(null);
 
   const {
     register,
@@ -55,6 +57,16 @@ export function CriarOcorrenciaForm({
 
   const tipoAmbulancia = watch('tipo_ambulancia');
   const tipoTrabalho = watch('tipo_trabalho');
+
+  // Atualizar tipo inferido quando vagas mudam
+  useEffect(() => {
+    if (vagas.length > 0) {
+      const tipo = inferirTipoAmbulancia(vagas);
+      setTipoInferido(tipo);
+    } else {
+      setTipoInferido(null);
+    }
+  }, [vagas]);
 
   // Wrapper para adicionar vagas ao formData antes de submeter
   const handleFormSubmit = async (formData: any) => {
@@ -75,48 +87,32 @@ export function CriarOcorrenciaForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-      {/* SEÇÃO 1: Tipo de Ambulância e Equipe */}
+      {/* SEÇÃO 1: Equipe de Profissionais */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">1. Tipo de Ambulância e Equipe</CardTitle>
+          <CardTitle className="text-lg">1. Equipe de Profissionais</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Tipo de Ambulância */}
-          <div className="space-y-2">
-            <Label htmlFor="tipo_ambulancia">
-              Tipo de Ambulância <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              onValueChange={(value) =>
-                setValue('tipo_ambulancia', value as TipoAmbulancia)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TipoAmbulancia.BASICA}>
-                  {TIPO_AMBULANCIA_LABELS[TipoAmbulancia.BASICA]} (1 Enfermeiro)
-                </SelectItem>
-                <SelectItem value={TipoAmbulancia.EMERGENCIA}>
-                  {TIPO_AMBULANCIA_LABELS[TipoAmbulancia.EMERGENCIA]} (1 Médico + 1
-                  Enfermeiro)
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.tipo_ambulancia && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.tipo_ambulancia.message}
-              </p>
-            )}
-          </div>
-
           {/* Lista Dinâmica de Profissionais */}
           <DynamicProfessionalList
             vagas={vagas}
             onChange={setVagas}
           />
+
+          {/* Display do Tipo Inferido */}
+          {vagas.length > 0 && tipoInferido && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-blue-900 mb-1">
+                Tipo de Ambulância (inferido automaticamente)
+              </p>
+              <p className="text-sm text-blue-700">
+                {getDescricaoTipoInferido(vagas)}
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                ℹ️ O tipo é determinado automaticamente pela presença de médico na equipe
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

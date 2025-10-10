@@ -25,6 +25,11 @@ export function getBadgeColor(type: string, value: string): string {
 
   if (type === 'tipo_ambulancia') {
     switch (value) {
+      case 'USB':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'UTI':
+        return 'bg-red-100 text-red-800 border-red-200';
+      // Manter compatibilidade com valores antigos (será removido após migration)
       case 'BASICA':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'EMERGENCIA':
@@ -93,8 +98,11 @@ export const TIPO_TRABALHO_LABELS: Record<string, string> = {
  * Retorna labels de tipo de ambulância
  */
 export const TIPO_AMBULANCIA_LABELS: Record<string, string> = {
-  BASICA: 'Básica',
-  EMERGENCIA: 'Emergência',
+  USB: 'USB (Unidade de Suporte Básico)',
+  UTI: 'UTI (Unidade de Terapia Intensiva)',
+  // Manter compatibilidade com valores antigos (será removido após migration)
+  BASICA: 'USB (Unidade de Suporte Básico)',
+  EMERGENCIA: 'UTI (Unidade de Terapia Intensiva)',
 };
 
 /**

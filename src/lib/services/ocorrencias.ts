@@ -7,6 +7,7 @@ import type {
   VagaProfissional,
 } from '@/types';
 import { StatusOcorrencia, TipoAmbulancia, TipoPerfil, TipoVaga } from '@/types';
+import { inferirTipoAmbulancia } from '@/lib/utils/ambulancia';
 
 /**
  * Serviço de Ocorrências
@@ -332,10 +333,15 @@ export const ocorrenciasService = {
       // 1. Gerar número de ocorrência
       const numeroOcorrencia = await this.gerarNumeroOcorrencia();
 
-      // 2. Preparar dados da ocorrência
+      // 2. Inferir automaticamente o tipo de ambulância baseado na equipe
+      const tipoAmbulanciaInferido = inferirTipoAmbulancia(vagasProfissionais);
+
+      console.log(`[createComVagasDinamicas] Tipo inferido: ${tipoAmbulanciaInferido} (baseado em ${vagasProfissionais.length} vagas)`);
+
+      // 3. Preparar dados da ocorrência
       const ocorrenciaParaInserir = {
         numero_ocorrencia: numeroOcorrencia,
-        tipo_ambulancia: ocorrenciaData.tipo_ambulancia,
+        tipo_ambulancia: tipoAmbulanciaInferido, // ✅ Tipo inferido automaticamente
         tipo_trabalho: ocorrenciaData.tipo_trabalho,
         status_ocorrencia: StatusOcorrencia.EM_ABERTO,
         descricao: ocorrenciaData.descricao || null,
@@ -348,7 +354,7 @@ export const ocorrenciasService = {
         criado_por,
       };
 
-      // 3. Inserir ocorrência
+      // 4. Inserir ocorrência
       const { data: ocorrencia, error: ocorrenciaError } = await supabase
         .from('ocorrencias')
         .insert([ocorrenciaParaInserir])

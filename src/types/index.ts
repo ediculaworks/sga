@@ -26,8 +26,8 @@ export enum StatusOcorrencia {
 }
 
 export enum TipoAmbulancia {
-  BASICA = 'BASICA',
-  EMERGENCIA = 'EMERGENCIA'
+  USB = 'USB', // Unidade de Suporte Básico (antiga BASICA)
+  UTI = 'UTI', // Unidade de Terapia Intensiva (antiga EMERGENCIA)
 }
 
 export enum TipoTrabalho {
