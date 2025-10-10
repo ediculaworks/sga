@@ -33,12 +33,12 @@ UPDATE equipamentos_catalogo
 SET tipo_ambulancia = 'USB'
 WHERE tipo_ambulancia = 'BASICA';
 
--- PASSO 4: Atualizar valores existentes em CHECKLIST_EQUIPAMENTOS_AMBULANCIA
-UPDATE checklist_equipamentos_ambulancia
+-- PASSO 4: Atualizar valores existentes em CHECKLIST_EQUIPAMENTOS_AMBULANCIAS
+UPDATE checklist_equipamentos_ambulancias
 SET tipo_definido = 'UTI'
 WHERE tipo_definido = 'EMERGENCIA';
 
-UPDATE checklist_equipamentos_ambulancia
+UPDATE checklist_equipamentos_ambulancias
 SET tipo_definido = 'USB'
 WHERE tipo_definido = 'BASICA';
 
