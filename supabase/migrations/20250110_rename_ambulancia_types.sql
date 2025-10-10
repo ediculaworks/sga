@@ -13,7 +13,12 @@
 -- Isso elimina a necessidade de "equipe mínima" fixa por tipo.
 -- ============================================================================
 
--- 1. Atualizar valores existentes em OCORRENCIAS
+-- PASSO 1: Adicionar novos valores ao ENUM existente (antes de fazer UPDATEs)
+-- Isso permite que o enum aceite tanto valores antigos quanto novos durante a transição
+ALTER TYPE tipo_ambulancia_enum ADD VALUE IF NOT EXISTS 'USB';
+ALTER TYPE tipo_ambulancia_enum ADD VALUE IF NOT EXISTS 'UTI';
+
+-- PASSO 2: Atualizar valores existentes em OCORRENCIAS
 UPDATE ocorrencias
 SET tipo_ambulancia = 'UTI'
 WHERE tipo_ambulancia = 'EMERGENCIA';
@@ -22,7 +27,7 @@ UPDATE ocorrencias
 SET tipo_ambulancia = 'USB'
 WHERE tipo_ambulancia = 'BASICA';
 
--- 2. Atualizar valores existentes em AMBULANCIAS
+-- PASSO 3: Atualizar valores existentes em AMBULANCIAS
 UPDATE ambulancias
 SET tipo_atual = 'UTI'
 WHERE tipo_atual = 'EMERGENCIA';
@@ -31,7 +36,7 @@ UPDATE ambulancias
 SET tipo_atual = 'USB'
 WHERE tipo_atual = 'BASICA';
 
--- 3. Atualizar valores existentes em EQUIPAMENTOS_CATALOGO
+-- PASSO 4: Atualizar valores existentes em EQUIPAMENTOS_CATALOGO
 UPDATE equipamentos_catalogo
 SET tipo_ambulancia = 'UTI'
 WHERE tipo_ambulancia = 'EMERGENCIA';
@@ -40,7 +45,7 @@ UPDATE equipamentos_catalogo
 SET tipo_ambulancia = 'USB'
 WHERE tipo_ambulancia = 'BASICA';
 
--- 4. Atualizar valores existentes em CHECKLIST_EQUIPAMENTOS_AMBULANCIA
+-- PASSO 5: Atualizar valores existentes em CHECKLIST_EQUIPAMENTOS_AMBULANCIA
 UPDATE checklist_equipamentos_ambulancia
 SET tipo_definido = 'UTI'
 WHERE tipo_definido = 'EMERGENCIA';
@@ -49,50 +54,9 @@ UPDATE checklist_equipamentos_ambulancia
 SET tipo_definido = 'USB'
 WHERE tipo_definido = 'BASICA';
 
--- 5. Atualizar o ENUM tipo_ambulancia_enum
--- Primeiro, criar um novo ENUM com os valores corretos
-CREATE TYPE tipo_ambulancia_enum_new AS ENUM ('USB', 'UTI');
-
--- Alterar as colunas para usar o novo ENUM
--- Precisamos fazer isso temporariamente como TEXT e depois converter
-
--- OCORRENCIAS
-ALTER TABLE ocorrencias
-  ALTER COLUMN tipo_ambulancia TYPE TEXT;
-
-ALTER TABLE ocorrencias
-  ALTER COLUMN tipo_ambulancia TYPE tipo_ambulancia_enum_new
-  USING tipo_ambulancia::tipo_ambulancia_enum_new;
-
--- AMBULANCIAS
-ALTER TABLE ambulancias
-  ALTER COLUMN tipo_atual TYPE TEXT;
-
-ALTER TABLE ambulancias
-  ALTER COLUMN tipo_atual TYPE tipo_ambulancia_enum_new
-  USING tipo_atual::tipo_ambulancia_enum_new;
-
--- EQUIPAMENTOS_CATALOGO
-ALTER TABLE equipamentos_catalogo
-  ALTER COLUMN tipo_ambulancia TYPE TEXT;
-
-ALTER TABLE equipamentos_catalogo
-  ALTER COLUMN tipo_ambulancia TYPE tipo_ambulancia_enum_new
-  USING tipo_ambulancia::tipo_ambulancia_enum_new;
-
--- CHECKLIST_EQUIPAMENTOS_AMBULANCIA
-ALTER TABLE checklist_equipamentos_ambulancia
-  ALTER COLUMN tipo_definido TYPE TEXT;
-
-ALTER TABLE checklist_equipamentos_ambulancia
-  ALTER COLUMN tipo_definido TYPE tipo_ambulancia_enum_new
-  USING tipo_definido::tipo_ambulancia_enum_new;
-
--- Remover o enum antigo e renomear o novo
-DROP TYPE tipo_ambulancia_enum;
-ALTER TYPE tipo_ambulancia_enum_new RENAME TO tipo_ambulancia_enum;
-
--- 6. Adicionar comentários explicativos
+-- PASSO 6: Adicionar comentários explicativos
+-- Nota: Mantemos os valores antigos (BASICA, EMERGENCIA) no enum temporariamente
+-- para compatibilidade. Eles podem ser removidos manualmente no futuro se necessário.
 COMMENT ON TYPE tipo_ambulancia_enum IS
 'Tipos de ambulância no sistema:
 - USB: Unidade de Suporte Básico (equipe sem médico)
