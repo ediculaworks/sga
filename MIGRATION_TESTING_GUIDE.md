@@ -37,7 +37,7 @@ Se a migration executar com sucesso, você verá:
 ```sql
 SELECT enumlabel
 FROM pg_enum
-WHERE enumtypid = 'tipo_ambulancia_enum'::regtype
+WHERE enumtypid = 'tipo_ambulancia'::regtype
 ORDER BY enumsortorder;
 ```
 
@@ -114,9 +114,13 @@ GROUP BY tipo_definido;
 **Causa:** Migration já foi executada anteriormente
 **Solução:** Isso é seguro, a migration usa `IF NOT EXISTS`
 
+### Erro: "type tipo_ambulancia_enum does not exist"
+**Causa:** Nome incorreto do enum (correto é `tipo_ambulancia` sem `_enum`)
+**Solução:** Execute a migration corrigida (commit 588e800)
+
 ### Erro: "invalid input value for enum"
 **Causa:** Tentando UPDATE antes de ADD enum values
-**Solução:** Execute a migration corrigida (commit 044e588)
+**Solução:** Execute a migration corrigida (commit 588e800)
 
 ### Erro: "column does not exist"
 **Causa:** Tabela não existe ou nome está errado
@@ -134,7 +138,9 @@ GROUP BY tipo_definido;
 
 ## 📚 Referências
 
-- **Commit da Migration:** `044e588`
+- **Commits:**
+  - `044e588` - Primeira versão da migration
+  - `588e800` - Correção do nome do enum (tipo_ambulancia)
 - **Versão:** v0.20.0
 - **Branch:** dev
 - **Documentação:** CHANGELOG.md, REFATORACAO_ALOCACAO_PROFISSIONAIS.md
