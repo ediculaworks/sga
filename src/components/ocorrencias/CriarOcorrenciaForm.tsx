@@ -68,7 +68,7 @@ export function CriarOcorrenciaForm({
     }
   }, [vagas]);
 
-  // Wrapper para adicionar vagas ao formData antes de submeter
+  // Wrapper para adicionar vagas e tipo inferido ao formData antes de submeter
   const handleFormSubmit = async (formData: any) => {
     // Validar que há pelo menos 1 profissional
     if (vagas.length === 0) {
@@ -76,9 +76,13 @@ export function CriarOcorrenciaForm({
       return;
     }
 
-    // Adicionar vagas ao formData
+    // Inferir tipo de ambulância baseado nas vagas
+    const tipoInferidoFinal = inferirTipoAmbulancia(vagas);
+
+    // Adicionar vagas e tipo inferido ao formData
     const dataComVagas = {
       ...formData,
+      tipo_ambulancia: tipoInferidoFinal, // ✅ Adicionar tipo inferido
       vagas,
     };
 
