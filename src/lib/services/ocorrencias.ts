@@ -374,12 +374,12 @@ export const ocorrenciasService = {
 
         // Criar vaga
         // Se for vaga designada, já criar confirmada com o ID do profissional
-        const isDesignada = vagaProfissional.tipo === TipoVaga.DESIGNADA && vagaProfissional.usuarioDesignado;
+        const isDesignada = vagaProfissional.tipo === TipoVaga.DESIGNADA && !!vagaProfissional.usuarioDesignado;
 
         const vaga: any = {
           ocorrencia_id: ocorrencia.id,
           funcao: vagaProfissional.funcao,
-          confirmado: isDesignada, // Vagas designadas já são confirmadas
+          confirmado: isDesignada, // Vagas designadas já são confirmadas (boolean)
           usuario_id: isDesignada ? vagaProfissional.usuarioDesignado!.id : null,
           usuario_designado_id: isDesignada ? vagaProfissional.usuarioDesignado!.id : null,
           valor_pagamento: valorPagamento,
