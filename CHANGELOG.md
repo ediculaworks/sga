@@ -30,6 +30,136 @@ Descrição clara e concisa da mudança.
 
 ---
 
+## [0.19.0] - 2025-01-09
+
+### 🚀 Refatoração Completa - Sistema de Alocação Dinâmica de Profissionais
+
+**BREAKING CHANGE:** Substituição completa do sistema de alocação de profissionais
+
+**Mudança Fundamental:**
+- **ANTES:** Campo "enfermeiros_adicionais" (número) que criava N vagas genéricas
+- **DEPOIS:** Lista dinâmica de profissionais com 3 tipos de vagas:
+  1. **Vaga Aberta - Médico:** Qualquer médico pode se candidatar
+  2. **Vaga Aberta - Enfermeiro:** Qualquer enfermeiro pode se candidatar
+  3. **Vaga Designada:** Profissional específico já escolhido pelo chefe
+
+**Motivação:**
+O sistema anterior gerava inconsistências no status das ocorrências porque:
+- Equipe mínima era inferida automaticamente baseada no tipo de ambulância
+- RLS (Row Level Security) podia filtrar vagas vazias (`usuario_id = NULL`)
+- Status mudava para "Confirmada" prematuramente (erro 400 em queries)
+- Não havia flexibilidade para designar profissionais específicos
+
+**Nova Arquitetura:**
+
+1. **Migration do Banco de Dados:**
+   - Adicionado campo `usuario_designado_id` em `ocorrencias_participantes`
+   - Constraints para garantir consistência de dados
+   - Índice para performance em queries de vagas designadas
+
+2. **Novos Componentes React:**
+   - `DynamicProfessionalList`: Gerencia lista dinâmica de profissionais
+   - `ProfessionalSelector`: Permite escolher tipo de vaga (Médico/Enfermeiro/Designar)
+   - `SearchableProfessionalList`: Busca e seleção de profissional específico
+
+3. **Tipos TypeScript:**
+   - Enum `TipoVaga`: ABERTA_MEDICO | ABERTA_ENFERMEIRO | DESIGNADA
+   - Interface `VagaProfissional`: Define estrutura de vaga
+   - Interface `OcorrenciaParticipante`: Atualizada com `usuario_designado_id`
+
+4. **Service Layer:**
+   - Novo método `createComVagasDinamicas`: Cria ocorrências com vagas personalizadas
+   - Método antigo `createComVagas`: Mantido para backward compatibility
+
+5. **Hooks & Queries:**
+   - `useOcorrenciasDisponiveis`: Agora filtra apenas vagas ABERTAS (sem `usuario_designado_id`)
+   - Profissionais NÃO veem vagas já designadas a outros
+
+6. **UI/UX:**
+   - Modal de detalhes mostra badge roxo "Designado" para profissionais designados
+   - Formulário de criação com adição dinâmica de profissionais
+   - Validação de mínimo 1 profissional na equipe
+
+**Arquivos Modificados:**
+
+**Database:**
+- `supabase/migrations/20250109_add_usuario_designado.sql` - Nova migration
+
+**Types:**
+- `src/types/index.ts` - Adicionados TipoVaga, VagaProfissional, atualizado OcorrenciaParticipante
+
+**Components:**
+- `src/components/ocorrencias/DynamicProfessionalList.tsx` - **NOVO**
+- `src/components/ocorrencias/ProfessionalSelector.tsx` - **NOVO**
+- `src/components/ocorrencias/SearchableProfessionalList.tsx` - **NOVO**
+- `src/components/ocorrencias/CriarOcorrenciaForm.tsx` - Refatorado completamente
+- `src/components/ocorrencias/OcorrenciaDetalhesModal.tsx` - Adicionado badge "Designado"
+
+**Services:**
+- `src/lib/services/ocorrencias.ts` - Adicionado `createComVagasDinamicas`
+
+**Hooks:**
+- `src/hooks/useOcorrenciasDisponiveis.ts` - Filtra apenas vagas abertas
+
+**Pages:**
+- `src/app/(dashboard)/chefe-medicos/central-despacho/page.tsx` - Usa novo método
+
+**Validations:**
+- `src/lib/validations/ocorrencia.ts` - Removido `quantidade_enfermeiros_adicionais`
+
+**Fluxo de Dados:**
+
+```
+1. Chefe Médico cria ocorrência
+2. Adiciona profissionais via DynamicProfessionalList
+   ↓
+   Opção A: Vaga Aberta → Profissionais podem se candidatar
+   Opção B: Designar → Profissional específico já alocado
+3. Submit → Validação (mín. 1 profissional)
+4. Service cria ocorrência + vagas personalizadas
+5. Vagas designadas: confirmado=true, usuario_id=X, usuario_designado_id=X
+6. Vagas abertas: confirmado=false, usuario_id=NULL, usuario_designado_id=NULL
+```
+
+**Impacto no Erro Original (Bug de Status):**
+
+✅ **RESOLVIDO PERMANENTEMENTE**
+
+O erro de status mudando prematuramente para "Confirmada" era causado por:
+- RLS bloqueando acesso a vagas vazias
+- `.every(v => v.confirmado)` avaliando apenas vagas visíveis
+- Sistema não conseguindo contar todas as vagas corretamente
+
+Com a nova arquitetura:
+- Vagas designadas já são criadas com `confirmado=true`
+- RLS não afeta contagem porque as vagas têm `usuario_id` preenchido
+- Sistema conta corretamente todas as vagas (abertas + designadas)
+- Status só muda quando TODAS as vagas estão confirmadas
+
+**Decisões Técnicas:**
+
+1. **Manter método antigo:** Preservado `createComVagas` para backward compatibility
+2. **Validação client-side:** Alert temporário, substituir por toast/inline no futuro
+3. **Badge roxo "Designado":** Diferenciação visual clara de vagas designadas vs. abertas
+4. **Filtro de vagas:** `!p.usuario_designado_id` garante que apenas vagas abertas aparecem
+
+**Breaking Changes:**
+
+- ❌ Campo `quantidade_enfermeiros_adicionais` removido do schema
+- ❌ Página central-despacho agora usa `createComVagasDinamicas`
+- ❌ FormData de ocorrências agora espera array `vagas: VagaProfissional[]`
+
+**Próximos Passos:**
+
+1. Executar migration `20250109_add_usuario_designado.sql` no banco de dados
+2. Testar criação de ocorrências com vagas abertas
+3. Testar criação de ocorrências com profissionais designados
+4. Testar candidatura de profissionais em vagas abertas
+5. Verificar que profissionais designados NÃO veem a vaga como disponível
+6. Confirmar que status só muda para CONFIRMADA quando todas as vagas preenchidas
+
+---
+
 ## [0.18.14] - 2025-10-09
 
 ### 🐛 Corrigido

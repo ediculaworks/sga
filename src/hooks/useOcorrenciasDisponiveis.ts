@@ -37,6 +37,7 @@ interface OcorrenciasGroup {
 interface OcorrenciaParticipante {
   id: number;
   usuario_id: number | null;
+  usuario_designado_id?: number | null; // Profissional designado diretamente
   funcao: string;
   confirmado: boolean;
 }
@@ -136,23 +137,23 @@ export function useOcorrenciasDisponiveis(
             profissional_confirmado: true,
           });
         } else if (ocorrencia.status_ocorrencia === 'EM_ABERTO') {
-          // Ocorrência em aberto - verificar se há vagas para este perfil
+          // Ocorrência em aberto - verificar se há vagas ABERTAS para este perfil
+          // IMPORTANTE: Filtrar apenas vagas SEM usuario_designado_id (vagas abertas para candidatura)
 
-          // Contar vagas disponíveis para o tipo de profissional
-          const vagasParaPerfil = participantes.filter(
-            (p) => p.funcao === tipoPerfil
+          // Contar vagas abertas disponíveis para o tipo de profissional
+          const vagasAbertasParaPerfil = participantes.filter(
+            (p) => p.funcao === tipoPerfil && !p.usuario_designado_id // Apenas vagas abertas
           );
 
-          const totalVagasParaPerfil = vagasParaPerfil.length;
-          const vagasPreenchidas = participantes.filter(
-            (p) => p.funcao === tipoPerfil && p.confirmado === true
+          const totalVagasAbertas = vagasAbertasParaPerfil.length;
+          const vagasAbertasPreenchidas = vagasAbertasParaPerfil.filter(
+            (p) => p.confirmado === true
           ).length;
 
-          const vagasDisponiveis = totalVagasParaPerfil - vagasPreenchidas;
+          const vagasAbertasDisponiveis = totalVagasAbertas - vagasAbertasPreenchidas;
 
-          if (vagasDisponiveis > 0) {
-            // Há vagas disponíveis para este perfil
-            // CORREÇÃO: Mapear status_ocorrencia para status (esperado pelo OcorrenciaCard)
+          if (vagasAbertasDisponiveis > 0) {
+            // Há vagas abertas disponíveis para este perfil
             disponiveis.push({
               id: ocorrencia.id,
               numero_ocorrencia: ocorrencia.numero_ocorrencia,
@@ -164,8 +165,8 @@ export function useOcorrenciasDisponiveis(
               horario_termino: ocorrencia.horario_termino,
               local_ocorrencia: ocorrencia.local_ocorrencia,
               status: ocorrencia.status_ocorrencia as 'EM_ABERTO' | 'CONFIRMADA' | 'EM_ANDAMENTO' | 'CONCLUIDA',
-              vagas_disponiveis: vagasDisponiveis,
-              total_vagas: totalVagasParaPerfil,
+              vagas_disponiveis: vagasAbertasDisponiveis,
+              total_vagas: totalVagasAbertas,
               profissional_confirmado: false,
             });
           }

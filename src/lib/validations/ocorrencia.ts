@@ -13,18 +13,6 @@ export const criarOcorrenciaSchema = z
       message: 'Selecione o tipo de ambulância',
     }),
 
-    // Quantidade adicional de enfermeiros (além da quantidade padrão)
-    quantidade_enfermeiros_adicionais: z
-      .union([z.string(), z.number()])
-      .pipe(z.coerce.number())
-      .pipe(
-        z
-          .number()
-          .int('Quantidade deve ser um número inteiro')
-          .min(0, 'Quantidade não pode ser negativa')
-          .max(5, 'Máximo de 5 enfermeiros adicionais')
-      ),
-
     // Tipo de trabalho
     tipo_trabalho: z.nativeEnum(TipoTrabalho, {
       message: 'Selecione o tipo de trabalho',

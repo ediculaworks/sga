@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle, Info } from 'lucide-react';
-import { TipoAmbulancia, TipoTrabalho } from '@/types';
+import { TipoAmbulancia, TipoTrabalho, VagaProfissional } from '@/types';
 import {
   criarOcorrenciaSchema,
   CriarOcorrenciaFormData,
@@ -26,6 +26,7 @@ import {
   TIPO_TRABALHO_LABELS,
 } from '@/lib/utils/styles';
 import { formatarInputData, formatarInputHora } from '@/lib/utils/formatters';
+import { DynamicProfessionalList } from './DynamicProfessionalList';
 
 interface CriarOcorrenciaFormProps {
   onSubmit: (data: CriarOcorrenciaFormData) => Promise<void>;
@@ -36,6 +37,8 @@ export function CriarOcorrenciaForm({
   onSubmit,
   isSubmitting,
 }: CriarOcorrenciaFormProps) {
+  const [vagas, setVagas] = useState<VagaProfissional[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -45,7 +48,6 @@ export function CriarOcorrenciaForm({
   } = useForm({
     resolver: zodResolver(criarOcorrenciaSchema),
     defaultValues: {
-      quantidade_enfermeiros_adicionais: 0,
       valor_enfermeiro: 0,
       valor_medico: 0,
     },
@@ -54,8 +56,25 @@ export function CriarOcorrenciaForm({
   const tipoAmbulancia = watch('tipo_ambulancia');
   const tipoTrabalho = watch('tipo_trabalho');
 
+  // Wrapper para adicionar vagas ao formData antes de submeter
+  const handleFormSubmit = async (formData: any) => {
+    // Validar que há pelo menos 1 profissional
+    if (vagas.length === 0) {
+      alert('É necessário adicionar pelo menos 1 profissional à equipe');
+      return;
+    }
+
+    // Adicionar vagas ao formData
+    const dataComVagas = {
+      ...formData,
+      vagas,
+    };
+
+    await onSubmit(dataComVagas);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* SEÇÃO 1: Tipo de Ambulância e Equipe */}
       <Card>
         <CardHeader>
@@ -93,47 +112,11 @@ export function CriarOcorrenciaForm({
             )}
           </div>
 
-          {/* Equipe Automática - Info */}
-          {tipoAmbulancia && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex gap-2">
-              <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-semibold">Equipe mínima automaticamente criada:</p>
-                {tipoAmbulancia === TipoAmbulancia.BASICA ? (
-                  <p>• 1 vaga de Enfermeiro</p>
-                ) : (
-                  <>
-                    <p>• 1 vaga de Médico</p>
-                    <p>• 1 vaga de Enfermeiro</p>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Quantidade adicional de enfermeiros */}
-          <div className="space-y-2">
-            <Label htmlFor="quantidade_enfermeiros_adicionais">
-              Enfermeiros Adicionais (opcional)
-            </Label>
-            <Input
-              id="quantidade_enfermeiros_adicionais"
-              type="number"
-              min="0"
-              max="5"
-              {...register('quantidade_enfermeiros_adicionais')}
-              placeholder="0"
-            />
-            <p className="text-sm text-gray-500">
-              Número de enfermeiros extras além da equipe mínima (máximo 5)
-            </p>
-            {errors.quantidade_enfermeiros_adicionais && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.quantidade_enfermeiros_adicionais.message}
-              </p>
-            )}
-          </div>
+          {/* Lista Dinâmica de Profissionais */}
+          <DynamicProfessionalList
+            vagas={vagas}
+            onChange={setVagas}
+          />
         </CardContent>
       </Card>
 

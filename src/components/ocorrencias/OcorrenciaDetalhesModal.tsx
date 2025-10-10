@@ -655,6 +655,11 @@ export function OcorrenciaDetalhesModal({
                           <span className="text-sm text-gray-900 truncate">
                             {p.usuario.nome_completo}
                           </span>
+                          {p.usuario_designado_id && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200 flex-shrink-0">
+                              Designado
+                            </span>
+                          )}
                         </>
                       ) : null}
                     </div>

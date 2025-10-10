@@ -4,8 +4,9 @@ import type {
   OcorrenciaCompleta,
   OcorrenciaFormData,
   TipoTrabalho,
+  VagaProfissional,
 } from '@/types';
-import { StatusOcorrencia, TipoAmbulancia } from '@/types';
+import { StatusOcorrencia, TipoAmbulancia, TipoPerfil, TipoVaga } from '@/types';
 
 /**
  * Serviço de Ocorrências
@@ -309,6 +310,110 @@ export const ocorrenciasService = {
       };
     } catch (error: any) {
       console.error('Erro em createComVagas:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cria uma nova ocorrência com vagas dinâmicas
+   * Versão atualizada que aceita lista de VagaProfissional
+   *
+   * Suporta:
+   * - Vagas abertas para médicos (qualquer médico pode se candidatar)
+   * - Vagas abertas para enfermeiros (qualquer enfermeiro pode se candidatar)
+   * - Vagas designadas (profissional específico já escolhido)
+   */
+  async createComVagasDinamicas(
+    ocorrenciaData: any,
+    vagasProfissionais: VagaProfissional[] = [],
+    criado_por: number
+  ) {
+    try {
+      // 1. Gerar número de ocorrência
+      const numeroOcorrencia = await this.gerarNumeroOcorrencia();
+
+      // 2. Preparar dados da ocorrência
+      const ocorrenciaParaInserir = {
+        numero_ocorrencia: numeroOcorrencia,
+        tipo_ambulancia: ocorrenciaData.tipo_ambulancia,
+        tipo_trabalho: ocorrenciaData.tipo_trabalho,
+        status_ocorrencia: StatusOcorrencia.EM_ABERTO,
+        descricao: ocorrenciaData.descricao || null,
+        local_ocorrencia: ocorrenciaData.local_ocorrencia,
+        endereco_completo: ocorrenciaData.endereco_completo || null,
+        data_ocorrencia: ocorrenciaData.data_ocorrencia,
+        horario_saida: ocorrenciaData.horario_saida,
+        horario_chegada_local: ocorrenciaData.horario_chegada_local,
+        horario_termino: ocorrenciaData.horario_termino || null,
+        criado_por,
+      };
+
+      // 3. Inserir ocorrência
+      const { data: ocorrencia, error: ocorrenciaError } = await supabase
+        .from('ocorrencias')
+        .insert([ocorrenciaParaInserir])
+        .select()
+        .single();
+
+      if (ocorrenciaError) {
+        console.error('Erro ao criar ocorrência:', ocorrenciaError);
+        throw new Error('Erro ao criar ocorrência');
+      }
+
+      // 4. Criar vagas de participantes baseado na lista dinâmica
+      const vagas: any[] = [];
+
+      for (const vagaProfissional of vagasProfissionais) {
+        // Determinar o valor de pagamento baseado na função
+        let valorPagamento = null;
+        if (vagaProfissional.funcao === TipoPerfil.MEDICO) {
+          valorPagamento = ocorrenciaData.valor_medico || null;
+        } else if (vagaProfissional.funcao === TipoPerfil.ENFERMEIRO) {
+          valorPagamento = ocorrenciaData.valor_enfermeiro || null;
+        }
+
+        // Criar vaga
+        const vaga: any = {
+          ocorrencia_id: ocorrencia.id,
+          funcao: vagaProfissional.funcao,
+          confirmado: false,
+          usuario_id: null,
+          usuario_designado_id: null,
+          valor_pagamento: valorPagamento,
+          data_pagamento: ocorrenciaData.data_pagamento,
+          pago: false,
+        };
+
+        // Se for vaga designada, adicionar o ID do usuário designado
+        if (vagaProfissional.tipo === TipoVaga.DESIGNADA && vagaProfissional.usuarioDesignado) {
+          vaga.usuario_designado_id = vagaProfissional.usuarioDesignado.id;
+        }
+
+        vagas.push(vaga);
+      }
+
+      // 5. Inserir todas as vagas
+      if (vagas.length > 0) {
+        const { error: vagasError } = await supabase
+          .from('ocorrencias_participantes')
+          .insert(vagas);
+
+        if (vagasError) {
+          console.error('Erro ao criar vagas:', vagasError);
+          console.error('Detalhes do erro:', JSON.stringify(vagasError, null, 2));
+          console.error('Vagas que tentamos inserir:', JSON.stringify(vagas, null, 2));
+          // Tentar deletar a ocorrência criada
+          await supabase.from('ocorrencias').delete().eq('id', ocorrencia.id);
+          throw new Error(`Erro ao criar vagas da ocorrência: ${vagasError.message || vagasError.code}`);
+        }
+      }
+
+      return {
+        ocorrencia,
+        vagas_criadas: vagas.length,
+      };
+    } catch (error: any) {
+      console.error('Erro em createComVagasDinamicas:', error);
       throw error;
     }
   },

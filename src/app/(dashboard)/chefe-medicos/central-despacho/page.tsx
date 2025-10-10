@@ -29,7 +29,7 @@ function CentralDespachoPage() {
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (formData: CriarOcorrenciaFormData) => {
+  const handleSubmit = async (formData: any) => {
     if (!user) {
       toast.error('Usuário não autenticado');
       return;
@@ -38,10 +38,13 @@ function CentralDespachoPage() {
     setIsSubmitting(true);
 
     try {
-      // Chamar serviço de criação com vagas automáticas
-      const resultado = await ocorrenciasService.createComVagas(
-        formData,
-        formData.quantidade_enfermeiros_adicionais || 0,
+      // Extrair vagas do formData
+      const { vagas, ...ocorrenciaData } = formData;
+
+      // Chamar serviço de criação com vagas dinâmicas
+      const resultado = await ocorrenciasService.createComVagasDinamicas(
+        ocorrenciaData,
+        vagas || [],
         user.id
       );
 
@@ -91,16 +94,16 @@ function CentralDespachoPage() {
         </h3>
         <ul className="space-y-1 text-sm text-blue-800">
           <li>
-            • <strong>Ambulância Básica:</strong> 1 vaga de enfermeiro será criada automaticamente
+            • Adicione os profissionais necessários para a ocorrência
           </li>
           <li>
-            • <strong>Ambulância de Emergência:</strong> 1 vaga de médico + 1 vaga de enfermeiro serão criadas
+            • Você pode criar <strong>vagas abertas</strong> (médicos/enfermeiros podem se candidatar) ou <strong>designar profissionais específicos</strong>
           </li>
           <li>
-            • Você pode adicionar enfermeiros extras conforme necessário
+            • É obrigatório ter pelo menos 1 profissional na equipe
           </li>
           <li>
-            • Após criada, a ocorrência ficará <strong>EM ABERTO</strong> e os profissionais poderão se inscrever
+            • Após criada, a ocorrência ficará <strong>EM ABERTO</strong> e os profissionais poderão se inscrever nas vagas abertas
           </li>
           <li>
             • Quando todas as vagas forem preenchidas, o status mudará automaticamente para <strong>CONFIRMADA</strong>

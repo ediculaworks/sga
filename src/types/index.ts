@@ -216,7 +216,8 @@ export interface Ocorrencia {
 export interface OcorrenciaParticipante {
   id: number;
   ocorrencia_id: number;
-  usuario_id: number;
+  usuario_id: number | null;
+  usuario_designado_id?: number | null; // ID do profissional designado diretamente pelo chefe
   funcao: TipoPerfil;
   valor_pagamento?: number;
   data_pagamento?: string;
@@ -411,7 +412,25 @@ export interface UsuarioFormData extends Omit<Usuario, 'id' | 'created_at' | 'up
   senha?: string;
 }
 
-export interface OcorrenciaFormData extends Omit<Ocorrencia, 'id' | 'created_at' | 'updated_at' | 'numero_ocorrencia'> {}
+// Tipo para definir uma vaga de profissional ao criar ocorrência
+export enum TipoVaga {
+  ABERTA_MEDICO = 'ABERTA_MEDICO', // Qualquer médico pode se candidatar
+  ABERTA_ENFERMEIRO = 'ABERTA_ENFERMEIRO', // Qualquer enfermeiro pode se candidatar
+  DESIGNADA = 'DESIGNADA', // Profissional específico já escolhido
+}
+
+export interface VagaProfissional {
+  tipo: TipoVaga;
+  funcao: TipoPerfil; // MEDICO ou ENFERMEIRO
+  usuarioDesignado?: {
+    id: number;
+    nome_completo: string;
+  } | null;
+}
+
+export interface OcorrenciaFormData extends Omit<Ocorrencia, 'id' | 'created_at' | 'updated_at' | 'numero_ocorrencia'> {
+  vagas?: VagaProfissional[]; // Lista dinâmica de profissionais
+}
 
 export interface AmbulanciaFormData extends Omit<Ambulancia, 'id' | 'created_at' | 'updated_at'> {}
 
