@@ -109,7 +109,29 @@ export function CriarOcorrenciaForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        console.log('🎯 Form onSubmit disparado!', e);
+        handleSubmit(handleFormSubmit)(e);
+      }}
+      className="space-y-6"
+    >
+      {/* Debug: Mostrar erros de validação */}
+      {Object.keys(errors).length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="font-semibold text-red-900 mb-2">
+            ⚠️ Erros de Validação ({Object.keys(errors).length})
+          </h3>
+          <ul className="space-y-1 text-sm text-red-800">
+            {Object.entries(errors).map(([field, error]) => (
+              <li key={field}>
+                <strong>{field}:</strong> {error?.message?.toString()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* SEÇÃO 1: Equipe de Profissionais */}
       <Card>
         <CardHeader>
@@ -479,7 +501,16 @@ export function CriarOcorrenciaForm({
         <Button type="button" variant="outline" disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="min-w-[140px]"
+          onClick={(e) => {
+            console.log('🖱️ Botão clicado!', e);
+            console.log('📝 Tipo do botão:', e.currentTarget.type);
+            console.log('🚫 Disabled?', isSubmitting);
+          }}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
