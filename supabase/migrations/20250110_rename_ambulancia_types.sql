@@ -15,8 +15,8 @@
 
 -- PASSO 1: Adicionar novos valores ao ENUM existente (antes de fazer UPDATEs)
 -- Isso permite que o enum aceite tanto valores antigos quanto novos durante a transição
-ALTER TYPE tipo_ambulancia_enum ADD VALUE IF NOT EXISTS 'USB';
-ALTER TYPE tipo_ambulancia_enum ADD VALUE IF NOT EXISTS 'UTI';
+ALTER TYPE tipo_ambulancia ADD VALUE IF NOT EXISTS 'USB';
+ALTER TYPE tipo_ambulancia ADD VALUE IF NOT EXISTS 'UTI';
 
 -- PASSO 2: Atualizar valores existentes em OCORRENCIAS
 UPDATE ocorrencias
@@ -57,7 +57,7 @@ WHERE tipo_definido = 'BASICA';
 -- PASSO 6: Adicionar comentários explicativos
 -- Nota: Mantemos os valores antigos (BASICA, EMERGENCIA) no enum temporariamente
 -- para compatibilidade. Eles podem ser removidos manualmente no futuro se necessário.
-COMMENT ON TYPE tipo_ambulancia_enum IS
+COMMENT ON TYPE tipo_ambulancia IS
 'Tipos de ambulância no sistema:
 - USB: Unidade de Suporte Básico (equipe sem médico)
 - UTI: Unidade de Terapia Intensiva (equipe com médico)

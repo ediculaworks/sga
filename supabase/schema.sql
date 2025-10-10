@@ -21,8 +21,10 @@ CREATE TYPE status_ocorrencia AS ENUM (
 );
 
 CREATE TYPE tipo_ambulancia AS ENUM (
-    'BASICA',
-    'EMERGENCIA'
+    'BASICA',      -- Mantido para compatibilidade (use USB)
+    'EMERGENCIA',  -- Mantido para compatibilidade (use UTI)
+    'USB',         -- Unidade de Suporte Básico (equipe sem médico)
+    'UTI'          -- Unidade de Terapia Intensiva (equipe com médico)
 );
 
 CREATE TYPE tipo_trabalho AS ENUM (
