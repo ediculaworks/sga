@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle, Info } from 'lucide-react';
 import { TipoAmbulancia, TipoTrabalho, VagaProfissional } from '@/types';
 import {
-  criarOcorrenciaSchema,
+  criarOcorrenciaFormSchema,
   CriarOcorrenciaFormData,
 } from '@/lib/validations/ocorrencia';
 import {
@@ -48,14 +48,20 @@ export function CriarOcorrenciaForm({
     watch,
     setValue,
   } = useForm({
-    resolver: zodResolver(criarOcorrenciaSchema),
+    resolver: zodResolver(criarOcorrenciaFormSchema), // ✅ Usar schema SEM tipo_ambulancia
     defaultValues: {
       valor_enfermeiro: 0,
       valor_medico: 0,
     },
   });
 
-  const tipoAmbulancia = watch('tipo_ambulancia');
+  // Log de erros de validação
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      console.error('❌ Erros de validação do formulário:', errors);
+    }
+  }, [errors]);
+
   const tipoTrabalho = watch('tipo_trabalho');
 
   // Atualizar tipo inferido quando vagas mudam
@@ -70,14 +76,20 @@ export function CriarOcorrenciaForm({
 
   // Wrapper para adicionar vagas e tipo inferido ao formData antes de submeter
   const handleFormSubmit = async (formData: any) => {
+    console.log('🔍 handleFormSubmit chamado!');
+    console.log('📋 formData recebido:', formData);
+    console.log('👥 vagas:', vagas);
+
     // Validar que há pelo menos 1 profissional
     if (vagas.length === 0) {
+      console.error('❌ Nenhuma vaga adicionada');
       alert('É necessário adicionar pelo menos 1 profissional à equipe');
       return;
     }
 
     // Inferir tipo de ambulância baseado nas vagas
     const tipoInferidoFinal = inferirTipoAmbulancia(vagas);
+    console.log('🚑 Tipo inferido:', tipoInferidoFinal);
 
     // Adicionar vagas e tipo inferido ao formData
     const dataComVagas = {
@@ -86,7 +98,14 @@ export function CriarOcorrenciaForm({
       vagas,
     };
 
-    await onSubmit(dataComVagas);
+    console.log('📤 Enviando dataComVagas:', dataComVagas);
+
+    try {
+      await onSubmit(dataComVagas);
+      console.log('✅ onSubmit executado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro no onSubmit:', error);
+    }
   };
 
   return (

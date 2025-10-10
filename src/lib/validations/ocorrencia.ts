@@ -2,16 +2,15 @@ import { z } from 'zod';
 import { TipoAmbulancia, TipoTrabalho } from '@/types';
 
 /**
- * Schema de validação para criação de ocorrências
+ * Schema de validação para o FORMULÁRIO de criação de ocorrências
  * Usado no formulário de Central de Despacho (Chefe dos Médicos)
+ *
+ * NOTA: tipo_ambulancia NÃO está aqui porque é inferido automaticamente
+ * pelas vagas e adicionado antes do submit.
  */
 
-export const criarOcorrenciaSchema = z
+export const criarOcorrenciaFormSchema = z
   .object({
-    // Tipo de ambulância (define vagas automaticamente)
-    tipo_ambulancia: z.nativeEnum(TipoAmbulancia, {
-      message: 'Selecione o tipo de ambulância',
-    }),
 
     // Tipo de trabalho
     tipo_trabalho: z.nativeEnum(TipoTrabalho, {
@@ -236,22 +235,36 @@ export const criarOcorrenciaSchema = z
       message: 'Horário de término deve ser posterior ao horário no local',
       path: ['horario_termino'],
     }
-  )
-  .refine(
-    (data) => {
-      // Validação: valor_medico é obrigatório se tipo_ambulancia é UTI (com médico)
-      if (data.tipo_ambulancia === TipoAmbulancia.UTI && !data.valor_medico) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'Valor do médico é obrigatório para ambulância UTI (com médico)',
-      path: ['valor_medico'],
-    }
   );
 
 /**
- * Tipo inferido do schema de validação
+ * Schema completo incluindo tipo_ambulancia (para validação após inferência)
+ * Usado após adicionar o tipo_ambulancia inferido ao formData
  */
-export type CriarOcorrenciaFormData = z.infer<typeof criarOcorrenciaSchema>;
+export const criarOcorrenciaSchema = criarOcorrenciaFormSchema.extend({
+  tipo_ambulancia: z.nativeEnum(TipoAmbulancia, {
+    message: 'Tipo de ambulância inválido',
+  }),
+}).refine(
+  (data) => {
+    // Validação: valor_medico é obrigatório se tipo_ambulancia é UTI (com médico)
+    if (data.tipo_ambulancia === TipoAmbulancia.UTI && !data.valor_medico) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'Valor do médico é obrigatório para ambulância UTI (com médico)',
+    path: ['valor_medico'],
+  }
+);
+
+/**
+ * Tipo inferido do schema de validação do FORMULÁRIO (sem tipo_ambulancia)
+ */
+export type CriarOcorrenciaFormData = z.infer<typeof criarOcorrenciaFormSchema>;
+
+/**
+ * Tipo inferido do schema COMPLETO (com tipo_ambulancia)
+ */
+export type CriarOcorrenciaData = z.infer<typeof criarOcorrenciaSchema>;
