@@ -373,20 +373,18 @@ export const ocorrenciasService = {
         }
 
         // Criar vaga
+        // Se for vaga designada, já criar confirmada com o ID do profissional
+        const isDesignada = vagaProfissional.tipo === TipoVaga.DESIGNADA && vagaProfissional.usuarioDesignado;
+
         const vaga: any = {
           ocorrencia_id: ocorrencia.id,
           funcao: vagaProfissional.funcao,
-          confirmado: false,
-          usuario_id: null,
-          usuario_designado_id: null,
+          confirmado: isDesignada, // Vagas designadas já são confirmadas
+          usuario_id: isDesignada ? vagaProfissional.usuarioDesignado!.id : null,
+          usuario_designado_id: isDesignada ? vagaProfissional.usuarioDesignado!.id : null,
           valor_pagamento: valorPagamento,
           data_pagamento: ocorrenciaData.data_pagamento,
           pago: false,
-        };
-
-        // Se for vaga designada, adicionar o ID do usuário designado
-        if (vagaProfissional.tipo === TipoVaga.DESIGNADA && vagaProfissional.usuarioDesignado) {
-          vaga.usuario_designado_id = vagaProfissional.usuarioDesignado.id;
         }
 
         vagas.push(vaga);
